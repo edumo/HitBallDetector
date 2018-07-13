@@ -27,6 +27,9 @@ public class LoopSpout extends PApplet {
 
 	// DECLARE A SPOUT OBJECT
 	Spout spout;
+	Spout spoutDown;
+
+	PGraphics down = null;
 
 	public void setup() {
 
@@ -45,6 +48,18 @@ public class LoopSpout extends PApplet {
 		// "sendTexture" is called and the sketch
 		// folder name is used.
 		spout.createSender("VideoSpout");
+
+		spoutDown = new Spout(this);
+
+		// CREATE A NAMED SENDER
+		// A sender can be created now with any name.
+		// Otherwise a sender is created the first time
+		// "sendTexture" is called and the sketch
+		// folder name is used.
+		spoutDown.createSender("VideoSpoutDown");
+
+		down = createGraphics(1280 / 2, 720 / 2, P2D);
+
 	}
 
 	public void movieEvent(Movie m) {
@@ -56,7 +71,14 @@ public class LoopSpout extends PApplet {
 		// movie.read();
 		// }
 		image(movie, 0, 0, width, height);
+
+		down.beginDraw();
+		down.image(movie, 0, 0, down.width, down.height);
+		down.endDraw();
+
 		spout.sendTexture(movie);
+		spoutDown.sendTexture(down);
+
 	}
 
 	public void settings() {

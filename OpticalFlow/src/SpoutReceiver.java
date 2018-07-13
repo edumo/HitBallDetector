@@ -57,7 +57,7 @@ public class SpoutReceiver extends PApplet {
 		// By default, the active sender will be detected
 		// when receiveTexture is called. But you can specify
 		// the name of the sender to initially connect to.
-		spout.createReceiver("VideoSpout");
+		spout.createReceiver("VideoSpoutDown");
 	}
 
 	public void draw() {
@@ -99,7 +99,7 @@ public class SpoutReceiver extends PApplet {
 	}
 
 	public void settings() {
-		size(1280, 720, P3D);
+		size(1280/2, 720/2, P3D);
 	}
 
 	static public void main(String[] passedArgs) {
