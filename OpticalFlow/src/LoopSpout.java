@@ -35,7 +35,7 @@ public class LoopSpout extends PApplet {
 
 		background(0);
 		// Load and play the video in a loop
-		movie = new Movie(this, "test1.mp4");
+		movie = new Movie(this, "test3.mp4");
 		movie.loop();
 		frameRate(60);
 
@@ -59,7 +59,7 @@ public class LoopSpout extends PApplet {
 		spoutDown.createSender("VideoSpoutDown");
 
 		down = createGraphics(1280 / 2, 720 / 2, P2D);
-
+//		movie.speed(0.2f);
 	}
 
 	public void movieEvent(Movie m) {
@@ -70,6 +70,7 @@ public class LoopSpout extends PApplet {
 		// if (movie.available() == true) {
 		// movie.read();
 		// }
+		movie.speed(0.9f);
 		image(movie, 0, 0, width, height);
 
 		down.beginDraw();
