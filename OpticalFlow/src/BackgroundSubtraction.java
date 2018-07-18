@@ -1,24 +1,19 @@
-import processing.core.*;
-import processing.data.*;
-import processing.event.*;
-import processing.opengl.*;
-import gab.opencv.*;
-import processing.video.*;
-import spout.Spout;
+import gab.opencv.Contour;
+import gab.opencv.OpenCV;
 
-import java.util.HashMap;
-import java.util.ArrayList;
 import java.awt.Rectangle;
-import java.io.File;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
+import java.util.ArrayList;
+
+import processing.core.PApplet;
+import processing.core.PGraphics;
+import processing.core.PImage;
+import processing.core.PVector;
+import spout.Spout;
+import deadpixel.keystone.CornerPinSurface;
+import deadpixel.keystone.Keystone;
 
 public class BackgroundSubtraction extends PApplet {
 
-	Movie video;
 	OpenCV opencv;
 
 	PGraphics videoDownsampling;
@@ -39,6 +34,13 @@ public class BackgroundSubtraction extends PApplet {
 
 	boolean withBackgorundSubtraction = true;
 
+	Keystone ks;
+	CornerPinSurface surface;
+
+	PGraphics offscreen;
+
+	Debouncing debouncing;
+
 	public void setup() {
 
 		// video = new Movie(this, "test1.mp4");
@@ -57,8 +59,20 @@ public class BackgroundSubtraction extends PApplet {
 
 		contours = new ArrayList<Contour>();
 
-		// Blobs list      
+		// Blobs list
 		blobList = new ArrayList<Blob>();
+
+		ks = new Keystone(this);
+		surface = ks.createCornerPinSurface(400, 300, 20);
+
+		// We need an offscreen buffer to draw the surface we
+		// want projected
+		// note that we're matching the resolution of the
+		// CornerPinSurface.
+		// (The offscreen buffer can be P2D or P3D)
+		offscreen = createGraphics(400, 300, P3D);
+
+		debouncing = new Debouncing(new ArrayList<PVector>(), 50, 0.2f, this);
 	}
 
 	public void draw() {
@@ -94,7 +108,7 @@ public class BackgroundSubtraction extends PApplet {
 
 		noTint();
 		tint(255, 100);
-//		image(opencv.getSnapshot(), 0, 360);
+		// image(opencv.getSnapshot(), 0, 360);
 		noTint();
 		noFill();
 		stroke(255, 0, 0);
@@ -105,15 +119,41 @@ public class BackgroundSubtraction extends PApplet {
 		pushStyle();
 		detectBlobs();
 
-		analyzeBlobs();
-
-		displayBlobs();
 		popStyle();
 
 		fill(255);
 		text(frameRate, 10, 10);
 
 		opencv.loadImage(videoDownsampling);
+
+		// Draw the scene, offscreen
+		offscreen.beginDraw();
+		// if (ks.isCalibrating())
+		if (!keyPressed) {
+			offscreen.blendMode(BLEND);
+			offscreen.background(255, 0, 0, 40);
+		} else {
+			offscreen.blendMode(LIGHTEST);
+		}
+			
+		// else
+		// offscreen.background(0, 0);
+
+		analyzeBlobs();
+
+		debouncing.display(g);
+
+		noFill();
+		displayBlobs();
+
+		offscreen.endDraw();
+
+		// most likely, you'll want a black background to minimize
+		// bleeding around your projection area
+
+		// render the scene, transformed using the corner pin surface
+		strokeWeight(1);
+		surface.render(offscreen);
 	}
 
 	private void bgSubstraction() {
@@ -124,10 +164,10 @@ public class BackgroundSubtraction extends PApplet {
 		// image(opencv.getSnapshot(), 0, 0);
 		opencv.updateBackground();
 
-		 opencv.dilate();
-		 opencv.dilate();
-		 opencv.dilate();
-		 opencv.blur(12);
+		opencv.dilate();
+		opencv.dilate();
+		opencv.dilate();
+		opencv.blur(12);
 
 	}
 
@@ -155,9 +195,33 @@ public class BackgroundSubtraction extends PApplet {
 
 	}
 
-	private void analyzeBlobs() {
-		for (Blob b : blobList) {
+	private void hited(PVector normalized) {
+		// offscreen.ellipse(normalized.x*offscreen.width,
+		// normalized.y*offscreen.height, debouncing.dist * 2,
+		// debouncing.dist);
+	}
 
+	private void analyzeBlobs() {
+		debouncing.update();
+
+		for (Blob b : blobList) {
+			if (b.hited && !b.processed) {
+
+				boolean toadd = debouncing.addHit(b.hitPosition);
+
+				if (toadd) {
+					// we have a hit!!
+					PVector pos = surface.getTransformedCursor(
+							(int) b.hitPosition.x, (int) b.hitPosition.y);
+
+					pos.x = norm(pos.x, 0, offscreen.width);
+					pos.y = norm(pos.y, 0, offscreen.height);
+
+					hited(pos);
+				}
+
+				b.processed = true;
+			}
 		}
 	}
 
@@ -314,8 +378,24 @@ public class BackgroundSubtraction extends PApplet {
 		return newBlobs;
 	}
 
-	public void movieEvent(Movie m) {
-		m.read();
+	public void keyPressed() {
+		switch (key) {
+		case 'c':
+			// enter/leave calibration mode, where surfaces can be warped
+			// and moved
+			ks.toggleCalibration();
+			break;
+
+		case 'l':
+			// loads the saved layout
+			ks.load();
+			break;
+
+		case 's':
+			// saves the layout
+			ks.save();
+			break;
+		}
 	}
 
 	public void settings() {

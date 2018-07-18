@@ -11,16 +11,16 @@ public class Debouncing {
 
 	float dist = 0;
 
-	long time = 50;
+	float timeToDieSegs = 50;
 
 	PApplet parent;
 
-	public Debouncing(List<PVector> lastHits, float dist, long time,
+	public Debouncing(List<PVector> lastHits, float dist, float timeToDieSegs,
 			PApplet parent) {
 		super();
 		this.lastHits = lastHits;
 		this.dist = dist;
-		this.time = time;
+		this.timeToDieSegs = timeToDieSegs;
 		this.parent = parent;
 	}
 
@@ -29,14 +29,12 @@ public class Debouncing {
 
 		for (PVector pos : lastHits) {
 			if (pos.dist(newHit) < dist) {
-
+				return false;
 			}
 		}
 
-		if (pass) {
-			newHit.z = parent.millis();
-			lastHits.add(newHit);
-		}
+		newHit.z = parent.millis()/1000f;
+		lastHits.add(newHit);
 
 		return pass;
 	}
@@ -46,7 +44,7 @@ public class Debouncing {
 		List<PVector> toRemove = new ArrayList<PVector>();
 
 		for (PVector pos : lastHits) {
-			if (parent.millis() / 1000f > pos.z + 0.1f) {
+			if (parent.millis()/1000f > pos.z + timeToDieSegs) {
 				toRemove.add(pos);
 			}
 		}
@@ -57,11 +55,11 @@ public class Debouncing {
 
 	public void display(PGraphics g) {
 		g.pushStyle();
-		g.fill(255,0,0,50);
+		g.fill(255, 0, 0, 150);
 		g.strokeWeight(2);
 		g.stroke(255);
 		for (PVector pos : lastHits) {
-			g.ellipse(pos.x,pos.y,dist,dist);
+			g.ellipse(pos.x, pos.y, dist, dist);
 		}
 		g.popStyle();
 	}

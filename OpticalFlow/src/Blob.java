@@ -145,13 +145,18 @@ class Blob {
 				velocityAvg.y /= num;
 			}
 
-			if (velocityAvg.y < -15f) {
+			if (velocityAvg.y < -0.1f) {
 				movingUp = true;
 			}
 
 			if (!hited && movingUp) {
 				if (velocityAvg.y > 4) {
-					PVector pos2 = path.get(path.size() - num);
+					PVector pos2;
+					if (path.size() > num + 2)
+						pos2 = path.get(path.size() - num - 2);
+					else
+						pos2 = path.get(path.size() - num);
+
 					hitPosition.set(pos2.x, pos2.y);
 					hited = true;
 				}
