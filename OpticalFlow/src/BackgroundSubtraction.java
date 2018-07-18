@@ -37,15 +37,14 @@ public class BackgroundSubtraction extends PApplet {
 	int blobSizeThreshold = 20;
 	int blobCount = 0;
 
+	boolean withBackgorundSubtraction = true;
+
 	public void setup() {
 
 		// video = new Movie(this, "test1.mp4");
 		opencv = new OpenCV(this, 640, 360);
 
-		opencv.startBackgroundSubtraction(10, 3, 0.05f);
-
-		// video.loop();
-		// video.play();
+		opencv.startBackgroundSubtraction(5, 3, 0.5f);
 
 		frameRate(60);
 
@@ -54,17 +53,22 @@ public class BackgroundSubtraction extends PApplet {
 		spout = new Spout(this);
 
 		spout.createReceiver("VideoSpoutDown");
-		img = createImage(1280, 720, ARGB);
+		img = createImage(1280 / 2, 720 / 2, ARGB);
 
 		contours = new ArrayList<Contour>();
 
-		// Blobs list
+		// Blobs list      
 		blobList = new ArrayList<Blob>();
 	}
 
 	public void draw() {
-		
-//		background(0);
+
+		if (!keyPressed) {
+			blendMode(BLEND);
+			background(0);
+		} else {
+			blendMode(LIGHTEST);
+		}
 
 		img = spout.receiveTexture(img);
 
@@ -79,35 +83,19 @@ public class BackgroundSubtraction extends PApplet {
 		videoDownsampling.image(img, 0, 0);
 		videoDownsampling.endDraw();
 
-		blendMode(DIFFERENCE);
-		 image(videoDownsampling, 0, 0);
+		// background(0);
+		image(videoDownsampling, 0, 0);
 
-		opencv.loadImage(videoDownsampling);
-
-		// opencv.setROI(mouseX, mouseY, roiWidth, roiHeight);
-
-		// opencv.calculateOpticalFlow();
-
-		// scale(2);
+		if (withBackgorundSubtraction) {
+			bgSubstraction();
+		} else {
+			frameDiff();
+		}
 
 		noTint();
-//		image(opencv.getSnapshot(), 0, 0);
-		opencv.updateBackground();
-
-//		tint(255, 150);
-		// opencv.contrast(12.5f);
-		opencv.blur(12);
-
-		 opencv.contrast(1.5f);
-		// opencv.brightness(10);
-//		image(opencv.getSnapshot(), 0, videoDownsampling.height);
-		// opencv.dilate();
-		// opencv.erode();
-		// opencv.dilate();
-		//
-
-		// opencv.contrast(1.5f);
-
+		tint(255, 100);
+//		image(opencv.getSnapshot(), 0, 360);
+		noTint();
 		noFill();
 		stroke(255, 0, 0);
 		strokeWeight(3);
@@ -124,6 +112,47 @@ public class BackgroundSubtraction extends PApplet {
 
 		fill(255);
 		text(frameRate, 10, 10);
+
+		opencv.loadImage(videoDownsampling);
+	}
+
+	private void bgSubstraction() {
+		// noTint();()
+		// opencv.blur(4);
+		// opencv.threshold(10);
+		// opencv.invert();
+		// image(opencv.getSnapshot(), 0, 0);
+		opencv.updateBackground();
+
+		 opencv.dilate();
+		 opencv.dilate();
+		 opencv.dilate();
+		 opencv.blur(12);
+
+	}
+
+	private void frameDiff() {
+		blendMode(LIGHTEST);
+
+		opencv.diff(videoDownsampling);
+
+		opencv.blur(4);
+		// opencv.erode();
+
+		opencv.threshold(30);
+		opencv.erode();
+
+		// opencv.erode();
+		opencv.dilate();
+		opencv.dilate();
+		opencv.blur(4);
+		// opencv.dilate();
+		// opencv.blur(4);
+
+		// opencv.dilate();
+		// opencv.dilate();
+		// opencv.dilate();
+
 	}
 
 	private void analyzeBlobs() {

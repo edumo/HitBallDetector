@@ -70,18 +70,25 @@ class Blob {
 		float opacity = PApplet.map(timer, 0, initTimer, 0, 127);
 		// canvas.fill(0, 0, 255, opacity);
 		// canvas.stroke(0, 0, 255);
-		 canvas.rect(r.x, r.y, r.width, r.height);
+		canvas.rect(r.x, r.y, r.width, r.height);
 		// canvas.fill(255, 2 * opacity);
-		 canvas.textSize(8);
-		 canvas.text("" + id, r.x + 10, r.y + 30);
+		canvas.textSize(8);
+		canvas.text("" + id, r.x + 10, r.y + 30);
 
-		 PVector last = null;
-		 for (PVector v : path) {
-		
-		 if (last != null)
-		 canvas.line(last.x, last.y, v.x, v.y);
-		 last = v;
-		 }
+		PVector last = null;
+		for (PVector v : path) {
+
+			if (hited) {
+				canvas.stroke(0, 255, 0);
+			} else if (movingUp) {
+				canvas.stroke(255, 0, 255);
+			} else {
+				canvas.stroke(255, 0, 0);
+			}
+			if (last != null)
+				canvas.line(last.x, last.y, v.x, v.y);
+			last = v;
+		}
 		//
 		// float scale = 10;
 		// if (last != null) {
@@ -105,13 +112,23 @@ class Blob {
 
 		contour = new Contour(parent, newC.pointMat);
 
-		PVector pos = new PVector((float) newC.getBoundingBox().getCenterX(),
-				(float) newC.getBoundingBox().getCenterY());
+		// PVector pos = new PVector((float) newC.getBoundingBox().getCenterX(),
+		// (float) newC.getBoundingBox().getCenterY());
+		//
+		// pos.add(0,newC.getBoundingBox().height/2);
 
-		path.add(pos);
+		List<PVector> points = newC.getPoints();
+		PVector top = points.get(0);
+		for (PVector point : points) {
+			if (point.y < top.y) {
+				top = point;
+			}
+		}
+
+		path.add(top);
 
 		if (path.size() > 1) {
-			PVector vel = PVector.sub(pos, path.get(path.size() - 2));
+			PVector vel = PVector.sub(top, path.get(path.size() - 2));
 			this.vels.add(vel);
 
 			velocityAvg.x = 0;
@@ -128,12 +145,12 @@ class Blob {
 				velocityAvg.y /= num;
 			}
 
-			if (velocityAvg.y < -0.001f) {
+			if (velocityAvg.y < -15f) {
 				movingUp = true;
 			}
 
 			if (!hited && movingUp) {
-				if (velocityAvg.y > 0.04) {
+				if (velocityAvg.y > 4) {
 					PVector pos2 = path.get(path.size() - num);
 					hitPosition.set(pos2.x, pos2.y);
 					hited = true;
@@ -141,17 +158,6 @@ class Blob {
 			}
 
 		}
-
-		// Is there a way to update the contour's points without creating a
-		// new one?
-		/*
-		 * ArrayList<PVector> newPoints = newC.getPoints(); Point[] inputPoints
-		 * = new Point[newPoints.size()];
-		 * 
-		 * for(int i = 0; i < newPoints.size(); i++){ inputPoints[i] = new
-		 * Point(newPoints.get(i).x, newPoints.get(i).y); }
-		 * contour.loadPoints(inputPoints);
-		 */
 
 		timer = initTimer;
 	}

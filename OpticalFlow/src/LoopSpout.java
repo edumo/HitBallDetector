@@ -23,6 +23,10 @@ public class LoopSpout extends PApplet {
 	 *
 	 */
 
+	Movie movie1;
+	Movie movie2;
+	Movie movie3;
+
 	Movie movie;
 
 	// DECLARE A SPOUT OBJECT
@@ -35,8 +39,13 @@ public class LoopSpout extends PApplet {
 
 		background(0);
 		// Load and play the video in a loop
-		movie = new Movie(this, "test3.mp4");
+		movie1 = new Movie(this, "test1.mp4");
+		movie2 = new Movie(this, "test2.mp4");
+		movie3 = new Movie(this, "test3.mp4");
+		
+		movie = movie1;
 		movie.loop();
+
 		frameRate(60);
 
 		// CREATE A NEW SPOUT OBJECT
@@ -59,7 +68,7 @@ public class LoopSpout extends PApplet {
 		spoutDown.createSender("VideoSpoutDown");
 
 		down = createGraphics(1280 / 2, 720 / 2, P2D);
-//		movie.speed(0.2f);
+		// movie.speed(0.2f);
 	}
 
 	public void movieEvent(Movie m) {
@@ -70,7 +79,7 @@ public class LoopSpout extends PApplet {
 		// if (movie.available() == true) {
 		// movie.read();
 		// }
-		movie.speed(0.9f);
+		movie.speed(1f);
 		image(movie, 0, 0, width, height);
 
 		down.beginDraw();
@@ -80,6 +89,24 @@ public class LoopSpout extends PApplet {
 		spout.sendTexture(movie);
 		spoutDown.sendTexture(down);
 
+	}
+
+	@Override
+	public void keyPressed() {
+
+		if (key == '1') {
+			movie.stop();
+			movie = movie1;
+			movie.loop();
+		} else if (key == '2') {
+			movie.stop();
+			movie = movie2;
+			movie.loop();
+		} else if (key == '3') {
+			movie.stop();
+			movie = movie3;
+			movie.loop();
+		}
 	}
 
 	public void settings() {
