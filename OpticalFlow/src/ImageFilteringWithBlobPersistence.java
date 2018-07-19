@@ -2,10 +2,12 @@ import processing.core.*;
 import processing.data.*;
 import processing.event.*;
 import processing.opengl.*;
-
 import gab.opencv.*;
+
 import java.awt.Rectangle;
+
 import processing.video.*;
+import spout.Spout;
 import controlP5.*;
 
 import java.util.HashMap;
@@ -16,6 +18,9 @@ import java.io.PrintWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+
+import deadpixel.keystone.CornerPinSurface;
+import deadpixel.keystone.Keystone;
 
 public class ImageFilteringWithBlobPersistence extends PApplet {
 
@@ -37,7 +42,10 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 	 */
 
 	OpenCV opencv;
-	Movie video;
+	// Movie video;
+	Spout spout;
+	PImage img;
+
 	PImage src, preProcessedImage, processedImage, contoursImage;
 
 	ArrayList<Contour> contours;
@@ -51,14 +59,16 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 	// Number of blobs detected over all time. Used to set IDs.
 	int blobCount = 0;
 
-	float contrast = 1.35f;
+	float contrast = 1.05f;
 	int brightness = 0;
-	int threshold = 75;
-	boolean useAdaptiveThreshold = false; // use basic thresholding
-	int thresholdBlockSize = 489;
-	int thresholdConstant = 45;
-	int blobSizeThreshold = 20;
-	int blurSize = 4;
+	int threshold = 105;
+
+	int thresholdBlockSize = 100;
+	int thresholdConstant = 35;
+	int minBlobSizeThreshold = 5;
+	int maxBlobSizeThreshold = 80;
+
+	int blurSize = 12;
 
 	// Control vars
 	ControlP5 cp5;
@@ -67,14 +77,32 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 	PGraphics videoDownsampling;
 
+	boolean debug = false;
+
+	boolean useBackgroundSubtraction = true;
+	boolean withThreshold = false;
+	boolean useAdaptiveThreshold = false; // use basic thresholding
+	private boolean useThreshold = false;
+
+	Keystone ks;
+	CornerPinSurface surface;
+
+	PGraphics offscreen;
+
+	Debouncing debouncing;
+
 	public void setup() {
 		frameRate(60);
 
-		video = new Movie(this, "test1.mp4");
-		// video = new Capture(this, 640, 480, "USB2.0 PC CAMERA");
-		video.loop();
+		// video = new Movie(this, "test1.mp4");
+		// // video = new Capture(this, 640, 480, "USB2.0 PC CAMERA");
+		// video.loop();
 
-		opencv = new OpenCV(this, 640, 480);
+		spout = new Spout(this);
+
+		spout.createReceiver("VideoSpoutDown");
+		img = createImage(640, 360, ARGB);
+
 		contours = new ArrayList<Contour>();
 
 		// Blobs list
@@ -85,64 +113,93 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		initControls();
 
 		// Set thresholding
-		toggleAdaptiveThreshold(useAdaptiveThreshold);
+		videoDownsampling = createGraphics(640, 360, P2D);
 
-		videoDownsampling = createGraphics(640, 480,P2D);
+		bar(2);
+
+		ks = new Keystone(this);
+		surface = ks.createCornerPinSurface(640, 360, 20);
+
+		// We need an offscreen buffer to draw the surface we
+		// want projected
+		// note that we're matching the resolution of the
+		// CornerPinSurface.
+		// (The offscreen buffer can be P2D or P3D)
+		offscreen = createGraphics(640, 360, P3D);
+
+		debouncing = new Debouncing(new ArrayList<PVector>(), 50, 0.2f, this);
+		try {
+			ks.load();
+		} catch (Exception e) {
+
+		}
+
 	}
 
 	public void draw() {
 
-		// Read last captured frame
-		if (video.available()) {
-			video.read();
+		background(0);
 
-			videoDownsampling.beginDraw();
-			videoDownsampling.image(video,0, 0, videoDownsampling.width,
-					videoDownsampling.height);
-			videoDownsampling.endDraw();
+		img = spout.receiveTexture(img);
 
-			// Load the new frame of our camera in to OpenCV
-			opencv.loadImage(videoDownsampling);
+		if (img == null) {
+			return;
+		}
+
+		// image(img, 0, 0);
+
+		videoDownsampling.beginDraw();
+		videoDownsampling.background(0);
+		videoDownsampling.image(img, 0, 0);
+		videoDownsampling.endDraw();
+
+		videoDownsampling.beginDraw();
+		videoDownsampling.image(videoDownsampling, 0, 0,
+				videoDownsampling.width, videoDownsampling.height);
+		videoDownsampling.endDraw();
+
+		// Load the new frame of our camera in to OpenCV
+
+		if (debug) {
 			src = opencv.getSnapshot();
+		} else {
 
-			// /////////////////////////////
-			// <1> PRE-PROCESS IMAGE
-			// - Grey channel
-			// - Brightness / Contrast
-			// /////////////////////////////
+		}
 
-			// Gray channel
-			opencv.gray();
+		// /////////////////////////////
+		// <1> PRE-PROCESS IMAGE
+		// - Grey channel
+		// - Brightness / Contrast
+		// /////////////////////////////
 
-			// opencv.brightness(brightness);
-			opencv.contrast(contrast);
+		// Gray channel
+		// opencv.gray();
 
-			// Save snapshot for display
+		// opencv.brightness(brightness);
+		opencv.contrast(contrast);
+
+		// Save snapshot for display
+		if (debug) {
 			preProcessedImage = opencv.getSnapshot();
+		}
 
-			// /////////////////////////////
-			// <2> PROCESS IMAGE
-			// - Threshold
-			// - Noise Supression
-			// /////////////////////////////
+		// /////////////////////////////
+		// <2> PROCESS IMAGE
+		// - Threshold
+		// - Noise Supression
+		// /////////////////////////////
 
-			// Adaptive threshold - Good when non-uniform illumination
-			if (useAdaptiveThreshold) {
+		// Adaptive threshold - Good when non-uniform illumination
+		if (useAdaptiveThreshold) {
 
-				// Block size must be odd and greater than 3
-				if (thresholdBlockSize % 2 == 0)
-					thresholdBlockSize++;
-				if (thresholdBlockSize < 3)
-					thresholdBlockSize = 3;
+			// Block size must be odd and greater than 3
+			if (thresholdBlockSize % 2 == 0)
+				thresholdBlockSize++;
+			if (thresholdBlockSize < 3)
+				thresholdBlockSize = 3;
 
-				opencv.adaptiveThreshold(thresholdBlockSize, thresholdConstant);
+			opencv.adaptiveThreshold(thresholdBlockSize, thresholdConstant);
 
-				// Basic threshold - range [0, 255]
-			} else {
-				opencv.threshold(threshold);
-			}
-
-			// Invert (black bg, white blobs)
 			opencv.invert();
 
 			// Reduce noise - Dilate and erode to close holes
@@ -152,44 +209,109 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 			// Blur
 			opencv.blur(blurSize);
 
-			// Save snapshot for display
+			// Basic threshold - range [0, 255]
+		} else if (useBackgroundSubtraction) {
+			opencv.updateBackground();
+			opencv.dilate();
+			opencv.dilate();
+			opencv.dilate();
+			opencv.blur(blurSize);
+		} else {
+			opencv.invert();
+			opencv.threshold(threshold);
+		}
+
+		// Invert (black bg, white blobs)
+
+		// Save snapshot for display
+		if (debug) {
 			processedImage = opencv.getSnapshot();
+		}
 
-			// /////////////////////////////
-			// <3> FIND CONTOURS
-			// /////////////////////////////
+		// /////////////////////////////
+		// <3> FIND CONTOURS
+		// /////////////////////////////
 
-			detectBlobs();
-			// Passing 'true' sorts them by descending area.
-			// contours = opencv.findContours(true, true);
+		detectBlobs();
+		// Passing 'true' sorts them by descending area.
+		// contours = opencv.findContours(true, true);
 
-			// Save snapshot for display
+		// Save snapshot for display
+		if (debug) {
 			contoursImage = opencv.getSnapshot();
+		}
 
-			// Draw
-			pushMatrix();
+		// Draw
+		pushMatrix();
 
-			// Leave space for ControlP5 sliders
-			translate(width - src.width, 0);
+		// Leave space for ControlP5 sliders
+		translate(width - videoDownsampling.width, 0);
 
-			// Display images
-			displayImages();
+		// Display images
+		displayImages();
 
-			// Display contours in the lower right window
-			pushMatrix();
+		// Display contours in the lower right window
+		pushMatrix();
+
+		if (debug) {
 			scale(0.5f);
-			translate(src.width, src.height);
+			translate(videoDownsampling.width, videoDownsampling.height);
+		}
 
-			// Contours
-			// displayContours();
-			// displayContoursBoundingBoxes();
+		// Contours
+		// displayContours();
+		// displayContoursBoundingBoxes();
 
-			// Blobs
-			displayBlobs();
+		analyzeBlobs();
 
-			popMatrix();
+		debouncing.display(g);
 
-			popMatrix();
+		// Blobs
+		displayBlobs();
+
+		popMatrix();
+
+		popMatrix();
+
+		text(frameRate, 10, 30);
+
+		opencv.loadImage(videoDownsampling);
+
+		if (!debug) {
+//			offscreen.beginDraw();
+//			// if (ks.isCalibrating())
+//			if (!keyPressed) {
+//				offscreen.blendMode(BLEND);
+//				offscreen.background(255, 0, 0, 40);
+//			} else {
+//				offscreen.blendMode(LIGHTEST);
+//			}
+
+			surface.render(offscreen);
+		}
+	}
+
+	private void analyzeBlobs() {
+		debouncing.update();
+
+		for (Blob b : blobList) {
+			if (b.hited && !b.processed) {
+
+				boolean toadd = debouncing.addHit(b.hitPosition);
+
+				if (toadd) {
+					// we have a hit!!
+					PVector pos = surface.getTransformedCursor(
+							(int) b.hitPosition.x, (int) b.hitPosition.y);
+
+					pos.x = norm(pos.x, 0, offscreen.width);
+					pos.y = norm(pos.y, 0, offscreen.height);
+
+					// hited(pos);
+				}
+
+				b.processed = true;
+			}
 		}
 	}
 
@@ -200,20 +322,28 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 	public void displayImages() {
 
 		pushMatrix();
-		scale(0.5f);
-		image(src, 0, 0);
-		image(preProcessedImage, src.width, 0);
-		image(processedImage, 0, src.height);
-		image(src, src.width, src.height);
+		if (debug)
+			scale(0.5f);
+
+		if (debug) {
+			image(src, 0, 0);
+			image(preProcessedImage, src.width, 0);
+			image(processedImage, 0, src.height);
+			image(src, src.width, src.height);
+		} else {
+			image(videoDownsampling, 0, 0);
+		}
 		popMatrix();
 
 		stroke(255);
 		fill(255);
 		textSize(12);
 		text("Source", 10, 25);
-		text("Pre-processed Image", src.width / 2 + 10, 25);
-		text("Processed Image", 10, src.height / 2 + 25);
-		text("Tracked Points", src.width / 2 + 10, src.height / 2 + 25);
+		if (debug) {
+			text("Pre-processed Image", src.width / 2 + 10, 25);
+			text("Processed Image", 10, src.height / 2 + 25);
+			text("Tracked Points", src.width / 2 + 10, src.height / 2 + 25);
+		}
 	}
 
 	public void displayBlobs() {
@@ -246,7 +376,9 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 			Rectangle r = contour.getBoundingBox();
 
 			if (// (contour.area() > 0.9 * src.width * src.height) ||
-			(r.width < blobSizeThreshold || r.height < blobSizeThreshold))
+			(r.width < minBlobSizeThreshold || r.height < minBlobSizeThreshold)
+					|| r.width > maxBlobSizeThreshold
+					|| r.height > maxBlobSizeThreshold)
 				continue;
 
 			stroke(255, 0, 0);
@@ -268,6 +400,8 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 		newBlobContours = getBlobsFromContours(contours);
 
+		int maxDistance = 60;
+
 		// println(contours.length);
 
 		// Check if the detected blobs already exist are new or some has
@@ -278,7 +412,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		if (blobList.isEmpty()) {
 			// Just make a Blob object for every face Rectangle
 			for (int i = 0; i < newBlobContours.size(); i++) {
-				println("+++ New blob detected with ID: " + blobCount);
+				// println("+++ New blob detected with ID: " + blobCount);
 				blobList.add(new Blob(this, blobCount, newBlobContours.get(i)));
 				blobCount++;
 			}
@@ -293,7 +427,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				// Find the new blob newBlobContours.get(index) that is closest
 				// to blob b
 				// set used[index] to true so that it can't be used twice
-				float record = 50000;
+				float record = maxDistance;
 				int index = -1;
 				for (int i = 0; i < newBlobContours.size(); i++) {
 					float d = dist(newBlobContours.get(i).getBoundingBox().x,
@@ -305,14 +439,16 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 						index = i;
 					}
 				}
-				// Update Blob object location
-				used[index] = true;
-				b.update(newBlobContours.get(index));
+				if (index >= 0) {
+					// Update Blob object location
+					used[index] = true;
+					b.update(newBlobContours.get(index));
+				}
 			}
 			// Add any unused blobs
 			for (int i = 0; i < newBlobContours.size(); i++) {
 				if (!used[i]) {
-					println("+++ New blob detected with ID: " + blobCount);
+					// println("+++ New blob detected with ID: " + blobCount);
 					blobList.add(new Blob(this, blobCount, newBlobContours
 							.get(i)));
 					// blobList.add(new Blob(blobCount, blobs[i].x, blobs[i].y,
@@ -334,7 +470,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				// Find blob object closest to the newBlobContours.get(i)
 				// Contour
 				// set available to false
-				float record = 50000;
+				float record = maxDistance;
 				int index = -1;
 				for (int j = 0; j < blobList.size(); j++) {
 					Blob b = blobList.get(j);
@@ -348,9 +484,12 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 					}
 				}
 				// Update Blob object location
-				Blob b = blobList.get(index);
-				b.available = false;
-				b.update(newBlobContours.get(i));
+				if (index >= 0) {
+					Blob b = blobList.get(index);
+					b.available = false;
+					b.update(newBlobContours.get(i));
+				}
+
 			}
 			// Start to kill any left over Blob objects
 			for (Blob b : blobList) {
@@ -384,7 +523,9 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 			Rectangle r = contour.getBoundingBox();
 
 			if (// (contour.area() > 0.9 * src.width * src.height) ||
-			(r.width < blobSizeThreshold || r.height < blobSizeThreshold))
+			(r.width < minBlobSizeThreshold || r.height < minBlobSizeThreshold)
+					|| r.width > maxBlobSizeThreshold
+					|| r.height > maxBlobSizeThreshold)
 				continue;
 
 			newBlobs.add(contour);
@@ -406,26 +547,43 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		cp5.addSlider("threshold").setLabel("threshold").setPosition(20, 110)
 				.setRange(0, 255);
 
-		// Toggle to activae adaptive threshold
-		cp5.addToggle("toggleAdaptiveThreshold")
-				.setLabel("use adaptive threshold").setSize(10, 10)
-				.setPosition(20, 144);
+		// // Toggle to activae adaptive threshold
+		// cp5.addToggle("toggleAdaptiveThreshold").setLabel("adaptive threshold")
+		// .setSize(10, 10).setValue(useAdaptiveThreshold)
+		// .setPosition(20, 144);
+		//
+		// // Toggle to activae adaptive threshold
+		// cp5.addToggle("toggleBackgorundSubtraction").setLabel("Backgorund Subtraction")
+		// .setSize(10, 10).setValue(useAdaptiveThreshold)
+		// .setPosition(20, 184);
+		//
+		//
+		// // Toggle to activae adaptive threshold
+		cp5.addToggle("toggleAdaptiveDebug").setLabel("show images")
+				.setSize(10, 10).setPosition(20, 184);
+
+		ButtonBar b = cp5.addButtonBar("bar").setPosition(0, 0)
+				.setSize(400, 20)
+				.addItems(split("threshold adaptative bg-substraction", " "));
+		b.changeItem("bg-substraction", "selected", true);
 
 		// Slider for adaptive threshold block size
 		cp5.addSlider("thresholdBlockSize").setLabel("a.t. block size")
-				.setPosition(20, 180).setRange(1, 700);
+				.setPosition(20, 240).setRange(1, 300);
 
 		// Slider for adaptive threshold constant
 		cp5.addSlider("thresholdConstant").setLabel("a.t. constant")
-				.setPosition(20, 200).setRange(-100, 100);
+				.setPosition(20, 280).setRange(-100, 100);
 
 		// Slider for blur size
 		cp5.addSlider("blurSize").setLabel("blur size").setPosition(20, 260)
 				.setRange(1, 20);
 
 		// Slider for minimum blob size
-		cp5.addSlider("blobSizeThreshold").setLabel("min blob size")
-				.setPosition(20, 290).setRange(0, 60);
+		cp5.addSlider("minBlobSizeThreshold").setLabel("min blob size")
+				.setPosition(20, 320).setRange(0, 60);
+		cp5.addSlider("maxBlobSizeThreshold").setLabel("max blob size")
+				.setPosition(20, 340).setRange(0, 160);
 
 		// Store the default background color, we gonna need it later
 		buttonColor = cp5.getController("contrast").getColor().getForeground();
@@ -433,27 +591,57 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				.getBackground();
 	}
 
-	public void toggleAdaptiveThreshold(boolean theFlag) {
+	public void toggleAdaptiveDebug(boolean theFlag) {
+		debug = !debug;
+	}
 
-		useAdaptiveThreshold = theFlag;
+	// public void toggleBackgorundSubtraction(boolean theFlag) {
+	// useBackgorundSubtraction = theFlag;
+	// }
 
-		if (useAdaptiveThreshold) {
+	public void bar(int n) {
+		println("bar clicked, item-value:", n);
 
-			// Lock basic threshold
+		if (n == 0) {
+			setLock(cp5.getController("thresholdBlockSize"), true);
+			setLock(cp5.getController("thresholdConstant"), true);
+			useAdaptiveThreshold = false;
+			useBackgroundSubtraction = false;
+
+			opencv = new OpenCV(this, 640, 360);
+			useThreshold = true;
+
+			setLock(cp5.getController("threshold"), false);
+		} else if (n == 1) {
+			useThreshold = false;
+			useBackgroundSubtraction = false;
+
+			opencv = new OpenCV(this, 640, 360);
+			// // Lock basic threshold
 			setLock(cp5.getController("threshold"), true);
-
-			// Unlock adaptive threshold
+			useAdaptiveThreshold = true;
+			//
+			// // Unlock adaptive threshold
 			setLock(cp5.getController("thresholdBlockSize"), false);
 			setLock(cp5.getController("thresholdConstant"), false);
 
 		} else {
-
-			// Unlock basic threshold
-			setLock(cp5.getController("threshold"), false);
-
-			// Lock adaptive threshold
 			setLock(cp5.getController("thresholdBlockSize"), true);
 			setLock(cp5.getController("thresholdConstant"), true);
+			useThreshold = false;
+			useAdaptiveThreshold = false;
+
+			opencv = new OpenCV(this, 640, 360);
+			opencv.startBackgroundSubtraction(5, 3, 0.5f);
+
+			useBackgroundSubtraction = true;
+
+			// // Unlock basic threshold
+
+			//
+			// // Lock adaptive threshold
+			// setLock(cp5.getController("thresholdBlockSize"), true);
+			// setLock(cp5.getController("thresholdConstant"), true);
 		}
 	}
 
@@ -470,11 +658,29 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 			theController.setColorForeground(color(buttonColor));
 		}
 	}
-
 	
+	public void keyPressed() {
+		switch (key) {
+		case 'c':
+			// enter/leave calibration mode, where surfaces can be warped
+			// and moved
+			ks.toggleCalibration();
+			break;
+
+		case 'l':
+			// loads the saved layout
+			ks.load();
+			break;
+
+		case 's':
+			// saves the layout
+			ks.save();
+			break;
+		}
+	}
 
 	public void settings() {
-		size(840, 480, P2D);
+		size(840, 480, P3D);
 	}
 
 	static public void main(String[] passedArgs) {

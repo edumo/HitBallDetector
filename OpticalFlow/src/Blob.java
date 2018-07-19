@@ -70,6 +70,7 @@ class Blob {
 		float opacity = PApplet.map(timer, 0, initTimer, 0, 127);
 		// canvas.fill(0, 0, 255, opacity);
 		// canvas.stroke(0, 0, 255);
+		canvas.noFill();
 		canvas.rect(r.x, r.y, r.width, r.height);
 		// canvas.fill(255, 2 * opacity);
 		canvas.textSize(8);

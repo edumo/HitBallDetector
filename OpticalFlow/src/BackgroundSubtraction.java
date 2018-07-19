@@ -55,7 +55,7 @@ public class BackgroundSubtraction extends PApplet {
 		spout = new Spout(this);
 
 		spout.createReceiver("VideoSpoutDown");
-		img = createImage(1280 / 2, 720 / 2, ARGB);
+		img = createImage(640, 360, ARGB);
 
 		contours = new ArrayList<Contour>();
 
@@ -73,6 +73,11 @@ public class BackgroundSubtraction extends PApplet {
 		offscreen = createGraphics(400, 300, P3D);
 
 		debouncing = new Debouncing(new ArrayList<PVector>(), 50, 0.2f, this);
+		try {
+			ks.load();
+		} catch (Exception e) {
+
+		}
 	}
 
 	public void draw() {
@@ -135,7 +140,7 @@ public class BackgroundSubtraction extends PApplet {
 		} else {
 			offscreen.blendMode(LIGHTEST);
 		}
-			
+
 		// else
 		// offscreen.background(0, 0);
 
@@ -177,21 +182,13 @@ public class BackgroundSubtraction extends PApplet {
 		opencv.diff(videoDownsampling);
 
 		opencv.blur(4);
-		// opencv.erode();
 
 		opencv.threshold(30);
 		opencv.erode();
 
-		// opencv.erode();
 		opencv.dilate();
 		opencv.dilate();
 		opencv.blur(4);
-		// opencv.dilate();
-		// opencv.blur(4);
-
-		// opencv.dilate();
-		// opencv.dilate();
-		// opencv.dilate();
 
 	}
 
@@ -258,7 +255,7 @@ public class BackgroundSubtraction extends PApplet {
 		if (blobList.isEmpty()) {
 			// Just make a Blob object for every face Rectangle
 			for (int i = 0; i < newBlobContours.size(); i++) {
-				println("+++ New blob detected with ID: " + blobCount);
+				// println("+++ New blob detected with ID: " + blobCount);
 				blobList.add(new Blob(this, blobCount, newBlobContours.get(i)));
 				blobCount++;
 			}

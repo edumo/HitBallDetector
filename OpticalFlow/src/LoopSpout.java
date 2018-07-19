@@ -68,6 +68,8 @@ public class LoopSpout extends PApplet {
 		spoutDown.createSender("VideoSpoutDown");
 
 		down = createGraphics(1280 / 2, 720 / 2, P2D);
+		
+		
 		// movie.speed(0.2f);
 	}
 
