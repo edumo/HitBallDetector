@@ -41,6 +41,9 @@ public class BackgroundSubtraction extends PApplet {
 
 	Debouncing debouncing;
 
+	float velocityUpThreshold = 0.1f;
+	float velocityDownThreshold = 4f;
+	
 	public void setup() {
 
 		// video = new Movie(this, "test1.mp4");
@@ -285,7 +288,7 @@ public class BackgroundSubtraction extends PApplet {
 				if (index >= 0) {
 					// Update Blob object location
 					used[index] = true;
-					b.update(newBlobContours.get(index));
+					b.update(newBlobContours.get(index),velocityDownThreshold,velocityUpThreshold);
 				}
 			}
 			// Add any unused blobs
@@ -330,7 +333,7 @@ public class BackgroundSubtraction extends PApplet {
 				if (index >= 0) {
 					Blob b = blobList.get(index);
 					b.available = false;
-					b.update(newBlobContours.get(i));
+					b.update(newBlobContours.get(i),velocityDownThreshold,velocityUpThreshold);
 				}
 
 			}

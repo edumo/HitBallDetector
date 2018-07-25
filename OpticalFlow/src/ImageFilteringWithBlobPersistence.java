@@ -68,6 +68,9 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 	int minBlobSizeThreshold = 5;
 	int maxBlobSizeThreshold = 80;
 
+	float velocityUpThreshold = 0.1f;
+	float velocityDownThreshold = 4f;
+
 	int blurSize = 12;
 
 	// Control vars
@@ -278,14 +281,14 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		opencv.loadImage(videoDownsampling);
 
 		if (!debug) {
-//			offscreen.beginDraw();
-//			// if (ks.isCalibrating())
-//			if (!keyPressed) {
-//				offscreen.blendMode(BLEND);
-//				offscreen.background(255, 0, 0, 40);
-//			} else {
-//				offscreen.blendMode(LIGHTEST);
-//			}
+			// offscreen.beginDraw();
+			// // if (ks.isCalibrating())
+			// if (!keyPressed) {
+			// offscreen.blendMode(BLEND);
+			// offscreen.background(255, 0, 0, 40);
+			// } else {
+			// offscreen.blendMode(LIGHTEST);
+			// }
 
 			surface.render(offscreen);
 		}
@@ -442,7 +445,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				if (index >= 0) {
 					// Update Blob object location
 					used[index] = true;
-					b.update(newBlobContours.get(index));
+					b.update(newBlobContours.get(index),velocityDownThreshold,velocityUpThreshold);
 				}
 			}
 			// Add any unused blobs
@@ -487,7 +490,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				if (index >= 0) {
 					Blob b = blobList.get(index);
 					b.available = false;
-					b.update(newBlobContours.get(i));
+					b.update(newBlobContours.get(i),velocityDownThreshold,velocityUpThreshold);
 				}
 
 			}
@@ -585,6 +588,12 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		cp5.addSlider("maxBlobSizeThreshold").setLabel("max blob size")
 				.setPosition(20, 340).setRange(0, 160);
 
+		// Slider for filtering blob movement
+		cp5.addSlider("velocityUpThreshold").setLabel("velocity up trheshold filtering blob")
+				.setPosition(20, 360).setRange(0.01f, 4f);
+		cp5.addSlider("velocityDownThreshold").setLabel("velocity down trheshold filtering blob")
+				.setPosition(20, 380).setRange(0.1f, 8f);
+
 		// Store the default background color, we gonna need it later
 		buttonColor = cp5.getController("contrast").getColor().getForeground();
 		buttonBgColor = cp5.getController("contrast").getColor()
@@ -658,7 +667,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 			theController.setColorForeground(color(buttonColor));
 		}
 	}
-	
+
 	public void keyPressed() {
 		switch (key) {
 		case 'c':

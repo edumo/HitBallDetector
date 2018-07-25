@@ -49,6 +49,10 @@ class Blob {
 
 	boolean movingUp = false;
 
+	float angle = -33;
+	float lastAngle = -33;
+	float lastAngleVariation = -33;
+
 	// Make me
 	public Blob(PApplet parent, int id, Contour c) {
 		this.parent = parent;
@@ -74,7 +78,7 @@ class Blob {
 		canvas.rect(r.x, r.y, r.width, r.height);
 		// canvas.fill(255, 2 * opacity);
 		canvas.textSize(8);
-		canvas.text("" + id, r.x + 10, r.y + 30);
+		canvas.text("" + id + " " + angle, r.x + 10, r.y + 30);
 
 		PVector last = null;
 		for (PVector v : path) {
@@ -91,13 +95,13 @@ class Blob {
 			last = v;
 		}
 		//
-		// float scale = 10;
-		// if (last != null) {
-		// canvas.strokeWeight(4);
-		// canvas.stroke(velocityAvg.y * scale * 10, 0, 0);
-		// canvas.line(last.x, last.y, last.x + velocityAvg.x * scale, last.y
-		// + velocityAvg.y * scale);
-		// }
+		float scale = 10;
+		if (last != null) {
+			canvas.strokeWeight(4);
+			canvas.stroke(velocityAvg.y * scale * 10, 0, 0, 100);
+			canvas.line(last.x, last.y, last.x + velocityAvg.x * scale, last.y
+					+ velocityAvg.y * scale);
+		}
 
 		if (hited) {
 			canvas.fill(255, 0, 0);
@@ -109,7 +113,8 @@ class Blob {
 
 	// Give me a new contour for this blob (shape, points, location, size)
 	// Oooh, it would be nice to lerp here!
-	public void update(Contour newC) {
+	public void update(Contour newC, float velocityUpThreshold,
+			float velocityDownThreshold) {
 
 		contour = new Contour(parent, newC.pointMat);
 
@@ -145,23 +150,50 @@ class Blob {
 				velocityAvg.x /= num;
 				velocityAvg.y /= num;
 			}
+			lastAngle = angle;
 
-			if (velocityAvg.y < -0.1f) {
+			angle = PApplet.atan2(velocityAvg.y, velocityAvg.x);
+
+			if (lastAngle > -33) {
+				// now we have moments to compare
+
+				float variation = PApplet.abs(angle - lastAngle);
+				if (lastAngleVariation > -33) {
+					float differentialVarationTime = PApplet.abs(variation
+							- lastAngleVariation);
+					PApplet.println(id + " dif " + differentialVarationTime);
+					if (differentialVarationTime > 1.5f) {
+						if (!hited && movingUp) {
+							hited = true;
+							PApplet.println(id + " hited");
+							hitPosition.set((float) newC.getBoundingBox()
+									.getCenterX(), (float) newC
+									.getBoundingBox().getCenterY());
+						}
+					}
+				}
+
+				lastAngleVariation = variation;
+
+			}
+
+			if (velocityAvg.y < -velocityDownThreshold) {
 				movingUp = true;
 			}
 
-			if (!hited && movingUp) {
-				if (velocityAvg.y > 4) {
-					PVector pos2;
-					if (path.size() > num + 2)
-						pos2 = path.get(path.size() - num - 2);
-					else
-						pos2 = path.get(path.size() - num);
-
-					hitPosition.set(pos2.x, pos2.y);
-					hited = true;
-				}
-			}
+			// if (!hited && movingUp) {
+			// if (velocityAvg.y > velocityUpThreshold) {
+			// PVector pos2;
+			// if (path.size() > num + 2)
+			// pos2 = path.get(path.size() - num - 2);
+			// else
+			// pos2 = path.get(path.size() - num);
+			//
+			// hitPosition.set(pos2.x, pos2.y);
+			// hited = true;
+			// PApplet.println(id + " hited");
+			// }
+			// }
 
 		}
 
