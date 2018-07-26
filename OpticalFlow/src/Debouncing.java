@@ -11,7 +11,7 @@ public class Debouncing {
 
 	float dist = 0;
 
-	float timeToDieSegs = 50;
+	float timeToDieSegs = 150;
 
 	PApplet parent;
 
@@ -28,12 +28,15 @@ public class Debouncing {
 		boolean pass = true;
 
 		for (PVector pos : lastHits) {
-			if (pos.dist(newHit) < dist) {
-				return false;
+			float d = PVector.dist(new PVector(pos.x, pos.y), new PVector(
+					newHit.x, newHit.y));
+			System.out.println("dist " + d);
+			if (d < dist / 2) {
+				 return false;
 			}
 		}
 
-		newHit.z = parent.millis()/1000f;
+		newHit.z = parent.millis() / 1000f;
 		lastHits.add(newHit);
 
 		return pass;
@@ -44,7 +47,7 @@ public class Debouncing {
 		List<PVector> toRemove = new ArrayList<PVector>();
 
 		for (PVector pos : lastHits) {
-			if (parent.millis()/1000f > pos.z + timeToDieSegs) {
+			if (parent.millis() / 1000f > pos.z + timeToDieSegs) {
 				toRemove.add(pos);
 			}
 		}
