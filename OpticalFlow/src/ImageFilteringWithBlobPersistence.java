@@ -19,6 +19,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 
+import netP5.NetAddress;
+import oscP5.OscMessage;
+import oscP5.OscP5;
 import deadpixel.keystone.CornerPinSurface;
 import deadpixel.keystone.Keystone;
 
@@ -94,6 +97,12 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 	Debouncing debouncing;
 
+	OscP5 oscP5;
+	NetAddress dest;
+
+	int receiveDataOnOSCPort = 6449;
+	int sendReceivedDataToPort = 6448;
+
 	public void setup() {
 		frameRate(60);
 
@@ -113,6 +122,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 		// Init Controls
 		cp5 = new ControlP5(this);
+		cp5.setPosition(640, 0);
 		initControls();
 
 		// Set thresholding
@@ -130,12 +140,20 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		// (The offscreen buffer can be P2D or P3D)
 		offscreen = createGraphics(640, 360, P3D);
 
-		debouncing = new Debouncing(new ArrayList<PVector>(), 50, 0.2f, this);
+		debouncing = new Debouncing(new ArrayList<PVector>(), 150, 1.8f, this);
 		try {
 			ks.load();
 		} catch (Exception e) {
 
 		}
+
+		oscP5 = new OscP5(this, receiveDataOnOSCPort); // listen for incoming
+		// OSC messages
+		dest = new NetAddress("127.0.0.1", sendReceivedDataToPort); // Set up
+		// sender to
+		// send to
+		// desired
+		// port
 
 	}
 
@@ -240,15 +258,15 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		// contours = opencv.findContours(true, true);
 
 		// Save snapshot for display
-		if (debug) {
-			contoursImage = opencv.getSnapshot();
-		}
+//		if (debug) {
+//			contoursImage = opencv.getSnapshot();
+//		}
 
 		// Draw
 		pushMatrix();
 
 		// Leave space for ControlP5 sliders
-		translate(width - videoDownsampling.width, 0);
+//		translate(width - videoDownsampling.width, 0);
 
 		// Display images
 		displayImages();
@@ -294,10 +312,33 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		}
 	}
 
+	@Override
+	public void mousePressed() {
+		// TODO Auto-generated method stub
+		debouncing.addHit(new PVector(mouseX,mouseY));
+	}
+	
+	int lastId = 0;
+
 	private void analyzeBlobs() {
 		debouncing.update();
 
+		boolean sended = false;
+
 		for (Blob b : blobList) {
+
+			if (b.id == lastId && b.lastAngleVariation > -33) {
+				sended = true;
+				OscMessage msg = new OscMessage("angle/");
+				msg.add(b.velocityAvg.y);
+				if (b.hited)
+					msg.add(0f);
+				else
+					msg.add(1f);
+
+				oscP5.send(msg, dest);
+			}
+
 			if (b.hited && !b.processed) {
 
 				boolean toadd = debouncing.addHit(b.hitPosition);
@@ -310,17 +351,29 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 					pos.x = norm(pos.x, 0, offscreen.width);
 					pos.y = norm(pos.y, 0, offscreen.height);
 
-					// hited(pos);
+					hited(pos);
+				}else{
+					println("descartado");
 				}
 
 				b.processed = true;
 			}
+		}
+
+		if (!sended && !blobList.isEmpty()) {
+			lastId = blobList.get(0).id;
+
 		}
 	}
 
 	// /////////////////////
 	// Display Functions
 	// /////////////////////
+
+	private void hited(PVector pos) {
+		// TODO Auto-generated method stub
+
+	}
 
 	public void displayImages() {
 
@@ -416,7 +469,8 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 			// Just make a Blob object for every face Rectangle
 			for (int i = 0; i < newBlobContours.size(); i++) {
 				// println("+++ New blob detected with ID: " + blobCount);
-				blobList.add(new Blob(this, blobCount, newBlobContours.get(i)));
+				blobList.add(new Blob(this, blobCount, newBlobContours.get(i),
+						oscP5, dest));
 				blobCount++;
 			}
 
@@ -445,7 +499,8 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				if (index >= 0) {
 					// Update Blob object location
 					used[index] = true;
-					b.update(newBlobContours.get(index),velocityDownThreshold,velocityUpThreshold);
+					b.update(newBlobContours.get(index), velocityDownThreshold,
+							velocityUpThreshold);
 				}
 			}
 			// Add any unused blobs
@@ -453,7 +508,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				if (!used[i]) {
 					// println("+++ New blob detected with ID: " + blobCount);
 					blobList.add(new Blob(this, blobCount, newBlobContours
-							.get(i)));
+							.get(i), oscP5, dest));
 					// blobList.add(new Blob(blobCount, blobs[i].x, blobs[i].y,
 					// blobs[i].width, blobs[i].height));
 					blobCount++;
@@ -490,7 +545,8 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				if (index >= 0) {
 					Blob b = blobList.get(index);
 					b.available = false;
-					b.update(newBlobContours.get(i),velocityDownThreshold,velocityUpThreshold);
+					b.update(newBlobContours.get(i), velocityDownThreshold,
+							velocityUpThreshold);
 				}
 
 			}
@@ -589,10 +645,12 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 				.setPosition(20, 340).setRange(0, 160);
 
 		// Slider for filtering blob movement
-		cp5.addSlider("velocityUpThreshold").setLabel("velocity up trheshold filtering blob")
+		cp5.addSlider("velocityUpThreshold")
+				.setLabel("velocity up trheshold filtering blob")
 				.setPosition(20, 360).setRange(0.01f, 4f);
-		cp5.addSlider("velocityDownThreshold").setLabel("velocity down trheshold filtering blob")
-				.setPosition(20, 380).setRange(0.1f, 8f);
+		cp5.addSlider("velocityDownThreshold")
+				.setLabel("velocity down trheshold filtering blob")
+				.setPosition(20, 380).setRange(0.1f, 18f);
 
 		// Store the default background color, we gonna need it later
 		buttonColor = cp5.getController("contrast").getColor().getForeground();

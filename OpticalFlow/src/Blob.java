@@ -2,6 +2,9 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import netP5.NetAddress;
+import oscP5.OscMessage;
+import oscP5.OscP5;
 import gab.opencv.Contour;
 import processing.core.PApplet;
 import processing.core.PGraphics;
@@ -53,12 +56,16 @@ class Blob {
 	float lastAngle = -33;
 	float lastAngleVariation = -33;
 
+	OscP5 oscP5;
+	NetAddress dest;
+
 	// Make me
-	public Blob(PApplet parent, int id, Contour c) {
+	public Blob(PApplet parent, int id, Contour c, OscP5 oscP5, NetAddress dest) {
 		this.parent = parent;
 		this.id = id;
 		this.contour = new Contour(parent, c.pointMat);
-
+		this.oscP5 = oscP5;
+		this.dest = dest;
 		available = true;
 		delete = false;
 
@@ -153,7 +160,10 @@ class Blob {
 			lastAngle = angle;
 
 			angle = PApplet.atan2(velocityAvg.y, velocityAvg.x);
-
+//			OscMessage msg = new OscMessage("angle/" + id);
+//			msg.add(top.y);
+//			// msg.add(top.x);
+//			oscP5.send(msg, dest);
 			if (lastAngle > -33) {
 				// now we have moments to compare
 
@@ -161,16 +171,19 @@ class Blob {
 				if (lastAngleVariation > -33) {
 					float differentialVarationTime = PApplet.abs(variation
 							- lastAngleVariation);
-					PApplet.println(id + " dif " + differentialVarationTime);
-					if (differentialVarationTime > 1.5f) {
-						if (!hited && movingUp) {
-							hited = true;
-							PApplet.println(id + " hited");
-							hitPosition.set((float) newC.getBoundingBox()
-									.getCenterX(), (float) newC
-									.getBoundingBox().getCenterY());
-						}
-					}
+					// PApplet.println(id + " dif " + differentialVarationTime);
+
+					
+
+//					if (differentialVarationTime > 1.5f) {
+//						if (!hited && movingUp) {
+//							hited = true;
+//							PApplet.println(id + " hited");
+//							hitPosition.set((float) newC.getBoundingBox()
+//									.getCenterX(), (float) newC
+//									.getBoundingBox().getCenterY());
+//						}
+//					}
 				}
 
 				lastAngleVariation = variation;
@@ -181,19 +194,19 @@ class Blob {
 				movingUp = true;
 			}
 
-			// if (!hited && movingUp) {
-			// if (velocityAvg.y > velocityUpThreshold) {
-			// PVector pos2;
-			// if (path.size() > num + 2)
-			// pos2 = path.get(path.size() - num - 2);
-			// else
-			// pos2 = path.get(path.size() - num);
-			//
-			// hitPosition.set(pos2.x, pos2.y);
-			// hited = true;
-			// PApplet.println(id + " hited");
-			// }
-			// }
+			if (!hited && movingUp) {
+				if (velocityAvg.y > velocityUpThreshold) {
+					PVector pos2;
+					if (path.size() > num + 2)
+						pos2 = path.get(path.size() - num - 2);
+					else
+						pos2 = path.get(path.size() - num);
+
+					hitPosition.set(pos2.x, pos2.y);
+					hited = true;
+					PApplet.println(id + " hited");
+				}
+			}
 
 		}
 

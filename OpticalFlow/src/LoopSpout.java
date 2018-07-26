@@ -88,7 +88,7 @@ public class LoopSpout extends PApplet {
 		down.image(movie, 0, 0, down.width, down.height);
 		down.endDraw();
 
-		spout.sendTexture(movie);
+		//spout.sendTexture(movie);
 		spoutDown.sendTexture(down);
 
 	}

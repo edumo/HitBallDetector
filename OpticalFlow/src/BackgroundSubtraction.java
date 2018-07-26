@@ -4,6 +4,8 @@ import gab.opencv.OpenCV;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
+import netP5.NetAddress;
+import oscP5.OscP5;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PImage;
@@ -44,6 +46,12 @@ public class BackgroundSubtraction extends PApplet {
 	float velocityUpThreshold = 0.1f;
 	float velocityDownThreshold = 4f;
 	
+	OscP5 oscP5;
+	NetAddress dest;
+
+	int receiveDataOnOSCPort = 6449;
+	int sendReceivedDataToPort = 6448;
+	
 	public void setup() {
 
 		// video = new Movie(this, "test1.mp4");
@@ -81,6 +89,10 @@ public class BackgroundSubtraction extends PApplet {
 		} catch (Exception e) {
 
 		}
+		
+		oscP5 = new OscP5(this, receiveDataOnOSCPort); // listen for incoming
+		// OSC messages
+		dest = new NetAddress("127.0.0.1", sendReceivedDataToPort); // Set up
 	}
 
 	public void draw() {
@@ -259,7 +271,7 @@ public class BackgroundSubtraction extends PApplet {
 			// Just make a Blob object for every face Rectangle
 			for (int i = 0; i < newBlobContours.size(); i++) {
 				// println("+++ New blob detected with ID: " + blobCount);
-				blobList.add(new Blob(this, blobCount, newBlobContours.get(i)));
+				blobList.add(new Blob(this, blobCount, newBlobContours.get(i),oscP5,dest));
 				blobCount++;
 			}
 
@@ -296,7 +308,7 @@ public class BackgroundSubtraction extends PApplet {
 				if (!used[i]) {
 					println("+++ New blob detected with ID: " + blobCount);
 					blobList.add(new Blob(this, blobCount, newBlobContours
-							.get(i)));
+							.get(i),oscP5,dest));
 					// blobList.add(new Blob(blobCount, blobs[i].x, blobs[i].y,
 					// blobs[i].width, blobs[i].height));
 					blobCount++;
