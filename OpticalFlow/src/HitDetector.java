@@ -25,7 +25,7 @@ import oscP5.OscP5;
 import deadpixel.keystone.CornerPinSurface;
 import deadpixel.keystone.Keystone;
 
-public class ImageFilteringWithBlobPersistence extends PApplet {
+public class HitDetector extends PApplet {
 
 	/**
 	 * Image Filtering This sketch will help us to adjust the filter values to
@@ -122,7 +122,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 		// Init Controls
 		cp5 = new ControlP5(this);
-		cp5.setPosition(640, 0);
+		cp5.setPosition(0, 0);
 		initControls();
 
 		// Set thresholding
@@ -140,7 +140,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		// (The offscreen buffer can be P2D or P3D)
 		offscreen = createGraphics(640, 360, P3D);
 
-		debouncing = new Debouncing(new ArrayList<PVector>(), 150, 1.8f, this);
+		debouncing = new Debouncing(new ArrayList<PVector>(), 100, .2f, this);
 		try {
 			ks.load();
 		} catch (Exception e) {
@@ -258,15 +258,15 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 		// contours = opencv.findContours(true, true);
 
 		// Save snapshot for display
-//		if (debug) {
-//			contoursImage = opencv.getSnapshot();
-//		}
+		// if (debug) {
+		// contoursImage = opencv.getSnapshot();
+		// }
 
 		// Draw
 		pushMatrix();
 
 		// Leave space for ControlP5 sliders
-//		translate(width - videoDownsampling.width, 0);
+		translate(width - videoDownsampling.width, 0);
 
 		// Display images
 		displayImages();
@@ -314,10 +314,9 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 	@Override
 	public void mousePressed() {
-		// TODO Auto-generated method stub
-		debouncing.addHit(new PVector(mouseX,mouseY));
+		// debouncing.addHit(new PVector(mouseX,mouseY));
 	}
-	
+
 	int lastId = 0;
 
 	private void analyzeBlobs() {
@@ -352,7 +351,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 					pos.y = norm(pos.y, 0, offscreen.height);
 
 					hited(pos);
-				}else{
+				} else {
 					println("descartado");
 				}
 
@@ -404,10 +403,43 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 
 	public void displayBlobs() {
 
+		int x = 50;
+		float scale = 2;
 		for (Blob b : blobList) {
 			strokeWeight(1);
 			b.display(g);
+			noFill();
+			stroke(255);
+			strokeWeight(1);
+			
+			showVelGraph(x, scale, b);
+
+			x += 150;
 		}
+	}
+
+	private void showVelGraph(int x, float scale, Blob b) {
+		rect(x - 20, height - 70, 40, 40);
+		stroke(255, 0, 0);
+		rect(x - velocityDownThreshold * scale / 2, height - 50
+				- velocityDownThreshold * scale / 2, velocityDownThreshold
+				* scale, velocityDownThreshold * scale);
+		stroke(0, 255, 0);
+		float xx = x - velocityUpThreshold * scale / 2;
+		float yy = height - 50
+				- velocityUpThreshold * scale / 2;
+		rect(xx, yy, velocityUpThreshold
+				* scale, velocityUpThreshold * scale);
+		strokeWeight(2);
+		stroke(255, 150);
+		//draw all vels in blending
+		for (PVector vel : b.vels) {
+			line(x, height - 50, x + vel.x * scale, height - 50
+					+ vel.y * scale);
+		}
+		stroke(255,0,0);
+		line(x, height - 50, x + b.velocityAvg.x * scale, height - 50
+				+ b.velocityAvg.y * scale);
 	}
 
 	public void displayContours() {
@@ -751,7 +783,7 @@ public class ImageFilteringWithBlobPersistence extends PApplet {
 	}
 
 	static public void main(String[] passedArgs) {
-		String[] appletArgs = new String[] { "ImageFilteringWithBlobPersistence" };
+		String[] appletArgs = new String[] { "HitDetector" };
 		if (passedArgs != null) {
 			PApplet.main(concat(appletArgs, passedArgs));
 		} else {

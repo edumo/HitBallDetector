@@ -102,7 +102,7 @@ class Blob {
 			last = v;
 		}
 		//
-		float scale = 10;
+		float scale = 5;
 		if (last != null) {
 			canvas.strokeWeight(4);
 			canvas.stroke(velocityAvg.y * scale * 10, 0, 0, 100);

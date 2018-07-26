@@ -30,9 +30,9 @@ public class Debouncing {
 		for (PVector pos : lastHits) {
 			float d = PVector.dist(new PVector(pos.x, pos.y), new PVector(
 					newHit.x, newHit.y));
-			System.out.println("dist " + d);
+			// System.out.println("dist " + d);
 			if (d < dist / 2) {
-				 return false;
+				return false;
 			}
 		}
 
