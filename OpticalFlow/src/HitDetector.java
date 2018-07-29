@@ -88,7 +88,6 @@ public class HitDetector extends PApplet {
 	boolean useBackgroundSubtraction = true;
 	boolean withThreshold = false;
 	boolean useAdaptiveThreshold = false; // use basic thresholding
-	private boolean useThreshold = false;
 
 	Keystone ks;
 	CornerPinSurface surface;
@@ -411,7 +410,7 @@ public class HitDetector extends PApplet {
 			noFill();
 			stroke(255);
 			strokeWeight(1);
-			
+
 			showVelGraph(x, scale, b);
 
 			x += 150;
@@ -426,18 +425,15 @@ public class HitDetector extends PApplet {
 				* scale, velocityDownThreshold * scale);
 		stroke(0, 255, 0);
 		float xx = x - velocityUpThreshold * scale / 2;
-		float yy = height - 50
-				- velocityUpThreshold * scale / 2;
-		rect(xx, yy, velocityUpThreshold
-				* scale, velocityUpThreshold * scale);
+		float yy = height - 50 - velocityUpThreshold * scale / 2;
+		rect(xx, yy, velocityUpThreshold * scale, velocityUpThreshold * scale);
 		strokeWeight(2);
 		stroke(255, 150);
-		//draw all vels in blending
+		// draw all vels in blending
 		for (PVector vel : b.vels) {
-			line(x, height - 50, x + vel.x * scale, height - 50
-					+ vel.y * scale);
+			line(x, height - 50, x + vel.x * scale, height - 50 + vel.y * scale);
 		}
-		stroke(255,0,0);
+		stroke(255, 0, 0);
 		line(x, height - 50, x + b.velocityAvg.x * scale, height - 50
 				+ b.velocityAvg.y * scale);
 	}
@@ -658,29 +654,41 @@ public class HitDetector extends PApplet {
 				.addItems(split("threshold adaptative bg-substraction", " "));
 		b.changeItem("bg-substraction", "selected", true);
 
+		Slider velocityDownThreshold;
+		Slider velocityUpThreshold;
+		Slider max;
+		Slider blur;
+		Slider threshold;
+		Slider min;
+		Slider thresholdBlock;
+		
+		
 		// Slider for adaptive threshold block size
-		cp5.addSlider("thresholdBlockSize").setLabel("a.t. block size")
-				.setPosition(20, 240).setRange(1, 300);
+		thresholdBlock = cp5.addSlider("thresholdBlockSize")
+				.setLabel("a.t. block size").setPosition(20, 240)
+				.setRange(1, 300);
 
 		// Slider for adaptive threshold constant
-		cp5.addSlider("thresholdConstant").setLabel("a.t. constant")
-				.setPosition(20, 280).setRange(-100, 100);
+		threshold = cp5.addSlider("thresholdConstant")
+				.setLabel("a.t. constant").setPosition(20, 280)
+				.setRange(-100, 100);
 
 		// Slider for blur size
-		cp5.addSlider("blurSize").setLabel("blur size").setPosition(20, 260)
-				.setRange(1, 20);
+		blur = cp5.addSlider("blurSize").setLabel("blur size")
+				.setPosition(20, 260).setRange(1, 20);
 
 		// Slider for minimum blob size
-		cp5.addSlider("minBlobSizeThreshold").setLabel("min blob size")
+		min = cp5.addSlider("minBlobSizeThreshold").setLabel("min blob size")
 				.setPosition(20, 320).setRange(0, 60);
-		cp5.addSlider("maxBlobSizeThreshold").setLabel("max blob size")
+		max = cp5.addSlider("maxBlobSizeThreshold").setLabel("max blob size")
 				.setPosition(20, 340).setRange(0, 160);
 
 		// Slider for filtering blob movement
-		cp5.addSlider("velocityUpThreshold")
+		velocityUpThreshold = cp5.addSlider("velocityUpThreshold")
 				.setLabel("velocity up trheshold filtering blob")
 				.setPosition(20, 360).setRange(0.01f, 4f);
-		cp5.addSlider("velocityDownThreshold")
+
+		velocityDownThreshold = cp5.addSlider("velocityDownThreshold")
 				.setLabel("velocity down trheshold filtering blob")
 				.setPosition(20, 380).setRange(0.1f, 18f);
 
@@ -708,11 +716,9 @@ public class HitDetector extends PApplet {
 			useBackgroundSubtraction = false;
 
 			opencv = new OpenCV(this, 640, 360);
-			useThreshold = true;
 
 			setLock(cp5.getController("threshold"), false);
 		} else if (n == 1) {
-			useThreshold = false;
 			useBackgroundSubtraction = false;
 
 			opencv = new OpenCV(this, 640, 360);
@@ -727,7 +733,6 @@ public class HitDetector extends PApplet {
 		} else {
 			setLock(cp5.getController("thresholdBlockSize"), true);
 			setLock(cp5.getController("thresholdConstant"), true);
-			useThreshold = false;
 			useAdaptiveThreshold = false;
 
 			opencv = new OpenCV(this, 640, 360);
@@ -758,6 +763,57 @@ public class HitDetector extends PApplet {
 		}
 	}
 
+	String id = null;
+
+	public void saveParams() {
+		XML xml = new XML("hitdetector-settings.xml");
+
+		xml.setString("id", id);
+		xml.setFloat("contrast", contrast);
+		xml.setInt("threshold", threshold);
+
+		xml.setInt("thresholdBlockSize", thresholdBlockSize);
+		xml.setInt("thresholdConstant", thresholdConstant);
+		xml.setInt("minBlobSizeThreshold", minBlobSizeThreshold);
+		xml.setInt("maxBlobSizeThreshold", maxBlobSizeThreshold);
+
+		xml.setFloat("velocityUpThreshold", velocityUpThreshold);
+		xml.setFloat("velocityDownThreshold", velocityDownThreshold);
+
+		saveXML(xml, "hitdetector-settings.xml");
+	}
+
+	public void loadParams() {
+		XML xml = loadXML("hitdetector-settings.xml");
+
+		id = xml.getString("id");
+		contrast = xml.getFloat("contrast");
+		threshold = xml.getInt("threshold");
+
+		thresholdBlockSize = xml.getInt("thresholdBlockSize");
+		thresholdConstant = xml.getInt("thresholdConstant");
+		minBlobSizeThreshold = xml.getInt("minBlobSizeThreshold");
+		maxBlobSizeThreshold = xml.getInt("maxBlobSizeThreshold");
+
+		velocityUpThreshold = xml.getFloat("velocityUpThreshold");
+		velocityDownThreshold = xml.getFloat("velocityDownThreshold");
+
+		// float contrast = 1.05f;
+		// int brightness = 0;
+		// int threshold = 105;
+		//
+		// int thresholdBlockSize = 100;
+		// int thresholdConstant = 35;
+		// int minBlobSizeThreshold = 5;
+		// int maxBlobSizeThreshold = 80;
+		//
+		// float velocityUpThreshold = 0.1f;
+		// float velocityDownThreshold = 4f;
+		//
+		// int blurSize = 12;
+
+	}
+
 	public void keyPressed() {
 		switch (key) {
 		case 'c':
@@ -769,11 +825,13 @@ public class HitDetector extends PApplet {
 		case 'l':
 			// loads the saved layout
 			ks.load();
+			loadParams();
 			break;
 
 		case 's':
 			// saves the layout
 			ks.save();
+			saveParams();
 			break;
 		}
 	}

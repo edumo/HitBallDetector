@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hitdetector-settings.xml contrast="1.05" id=""
+	maxBlobSizeThreshold="80" minBlobSizeThreshold="5" threshold="105"
+	thresholdBlockSize="100" thresholdConstant="35" velocityDownThreshold="4.0"
+	velocityUpThreshold="0.1" />

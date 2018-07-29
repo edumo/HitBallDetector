@@ -105,6 +105,7 @@ public class Frames extends PApplet {
 			if (newFrame < getLength() - 1)
 				newFrame += 1;
 		}
+		
 		if (key == 'a') {
 			if (0 < newFrame)
 				newFrame -= 50;
