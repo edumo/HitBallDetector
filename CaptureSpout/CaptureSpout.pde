@@ -20,6 +20,7 @@ void setup() {
   
   frameRate(60);
 
+
   String[] cameras = Capture.list();
 
   if (cameras == null) {
@@ -35,7 +36,9 @@ void setup() {
 
     // The camera can be initialized directly using an element
     // from the array returned by list():
-    cam = new Capture(this, 1280, 720, cameras[1]);
+
+    cam = new Capture(this, 1280, 720,cameras[0]);
+
     // Or, the settings can be defined based on the text in the list
     //cam = new Capture(this, 640, 480, "Built-in iSight", 30);
 
@@ -43,15 +46,11 @@ void setup() {
     cam.start();
   }
 
-  // CREATE A NEW SPOUT OBJECT
-  //spout = new Spout(this);
+ // spout = new Spout(this);
 
-  // CREATE A NAMED SENDER
-  // A sender can be created now with any name.
-  // Otherwise a sender is created the first time
-  // "sendTexture" is called and the sketch
-  // folder name is used.
+
 //  spout.createSender("VideoSpout");
+
 
   spoutDown = new Spout(this);
 
@@ -60,15 +59,17 @@ void setup() {
   // Otherwise a sender is created the first time
   // "sendTexture" is called and the sketch
   // folder name is used.
+
   spoutDown.createSender("VideoSpoutDown",1280/2, 720/2);
 
   down = createGraphics(1280/2, 720/2,P2D);
+
 }
 
 void draw() {
   if (cam.available() == true) {
     cam.read();
-    //  cam.loadPixels();
+
    
   }
   
@@ -84,11 +85,17 @@ image(down, 0, 0, width, height);
   
   
   
-  
-  // The following does the same as the above image() line, but 
-  // is faster when just drawing the image without any additional 
-  // resizing, transformations, or tint.
-  //set(0, 0, cam);
-  
+
+  image(cam, 0, 0, width, height);
+
   text("fps: " + frameRate,10,10);
+
+
+  down.beginDraw();
+  down.image(cam, 0, 0, down.width, down.height);
+  down.endDraw();
+
+ // spout.sendTexture(cam);
+  spoutDown.sendTexture(down);
 }
+//>>>>>>> dc589859e55abddeaa5c1ec52fd89aca867c13a7
