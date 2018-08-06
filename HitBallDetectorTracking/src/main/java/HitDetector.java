@@ -96,11 +96,14 @@ public class HitDetector extends PApplet {
 
 	Debouncing debouncing;
 
-	OscP5 oscP5;
-	NetAddress dest;
+	OscP5 oscP5Wekinator;
+	OscP5 oscP5Hits;
+	NetAddress destWekinator;
+	NetAddress destHits;
 
 	int receiveDataOnOSCPort = 6449;
 	int sendReceivedDataToPort = 6448;
+	int sendReceivedDataToPortHits = 7010;
 
 	public void setup() {
 		frameRate(60);
@@ -145,10 +148,17 @@ public class HitDetector extends PApplet {
 		} catch (Exception e) {
 
 		}
-
-		oscP5 = new OscP5(this, receiveDataOnOSCPort); // listen for incoming
 		// OSC messages
-		dest = new NetAddress("127.0.0.1", sendReceivedDataToPort); // Set up
+		oscP5Wekinator = new OscP5(this, receiveDataOnOSCPort); // listen for
+																// incoming
+		oscP5Hits = new OscP5(this, receiveDataOnOSCPort + 1); // listen for
+															// incoming
+
+		destWekinator = new NetAddress("127.0.0.1", sendReceivedDataToPort); // Set
+																				// up
+		destHits = new NetAddress("127.0.0.1", sendReceivedDataToPortHits); // Set
+																			// up
+
 		// sender to
 		// send to
 		// desired
@@ -325,6 +335,7 @@ public class HitDetector extends PApplet {
 
 		for (Blob b : blobList) {
 
+			// TESTS for wekinator
 			if (b.id == lastId && b.lastAngleVariation > -33) {
 				sended = true;
 				OscMessage msg = new OscMessage("angle/");
@@ -334,7 +345,7 @@ public class HitDetector extends PApplet {
 				else
 					msg.add(1f);
 
-				oscP5.send(msg, dest);
+				oscP5Wekinator.send(msg, destWekinator);
 			}
 
 			if (b.hited && !b.processed) {
@@ -349,7 +360,8 @@ public class HitDetector extends PApplet {
 					pos.x = norm(pos.x, 0, offscreen.width);
 					pos.y = norm(pos.y, 0, offscreen.height);
 
-					hited(pos);
+					float confidence = 1.0f;// TODO
+					hited(pos, confidence);
 				} else {
 					println("descartado");
 				}
@@ -368,9 +380,13 @@ public class HitDetector extends PApplet {
 	// Display Functions
 	// /////////////////////
 
-	private void hited(PVector pos) {
-		// TODO Auto-generated method stub
+	private void hited(PVector pos, float confidence) {
+		OscMessage msg = new OscMessage("/Touch");
+		msg.add(pos.x);
+		msg.add(pos.y);
+		msg.add(confidence);
 
+		oscP5Hits.send(msg, destHits);
 	}
 
 	public void displayImages() {
@@ -498,7 +514,7 @@ public class HitDetector extends PApplet {
 			for (int i = 0; i < newBlobContours.size(); i++) {
 				// println("+++ New blob detected with ID: " + blobCount);
 				blobList.add(new Blob(this, blobCount, newBlobContours.get(i),
-						oscP5, dest));
+						oscP5Wekinator, destWekinator));
 				blobCount++;
 			}
 
@@ -536,7 +552,7 @@ public class HitDetector extends PApplet {
 				if (!used[i]) {
 					// println("+++ New blob detected with ID: " + blobCount);
 					blobList.add(new Blob(this, blobCount, newBlobContours
-							.get(i), oscP5, dest));
+							.get(i), oscP5Wekinator, destWekinator));
 					// blobList.add(new Blob(blobCount, blobs[i].x, blobs[i].y,
 					// blobs[i].width, blobs[i].height));
 					blobCount++;
@@ -661,8 +677,7 @@ public class HitDetector extends PApplet {
 		Slider threshold;
 		Slider min;
 		Slider thresholdBlock;
-		
-		
+
 		// Slider for adaptive threshold block size
 		thresholdBlock = cp5.addSlider("thresholdBlockSize")
 				.setLabel("a.t. block size").setPosition(20, 240)

@@ -39,7 +39,7 @@ public class OSCDataPlotter extends PApplet {
 	// ******Change the following variables to alter OSC and drawing behaviour:
 	// **********//
 
-	int receiveDataOnOSCPort = 6448;
+	int receiveDataOnOSCPort = 7010;
 	// If you want to use this to monitor features usually sento to Wekinator,
 	// receiveDataOnOSCPort should be 6448
 	// Or, if you want to use this to monitor output from Wekinator,
