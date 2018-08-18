@@ -19,7 +19,7 @@ public class SendImagesWekinator extends PApplet {
 
 	String[] files = null;
 
-	String path = "C:/Users/motografica/git/HitBallDetector/HitBallDetectorTracking/imgsdataset";
+	String path = "C:/Users/motografica/git/HitBallDetector/HitBallDetectorTracking/balls";
 
 	SimpleVideoInputWithProcessing_100Inputs wekinator = null;
 
@@ -31,7 +31,7 @@ public class SendImagesWekinator extends PApplet {
 		File file = new File(path);
 		files = file.list();
 		println(files);
-		
+
 		img = loadImage(path + "/" + files[0]);
 
 	}
@@ -42,8 +42,6 @@ public class SendImagesWekinator extends PApplet {
 
 		background(0);
 
-		
-
 		image(img, 0, 0, 300, 300);
 
 		if (keyPressed && key == ' ') {
@@ -52,10 +50,10 @@ public class SendImagesWekinator extends PApplet {
 			if (i >= files.length) {
 				exit();
 			} else {
-				
+
 			}
+			wekinator.send(g, img);
 		}
-		wekinator.send(g, img);
 		
 
 	}

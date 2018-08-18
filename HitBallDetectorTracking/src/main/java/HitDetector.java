@@ -12,6 +12,7 @@ import controlP5.*;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -109,13 +110,20 @@ public class HitDetector extends PApplet {
 	NetAddress destWekinator;
 	NetAddress destHits;
 
-	int receiveDataOnOSCPort = 7449;
+	int receiveDataOnOSCPort = 12000;
 	int sendReceivedDataToPort = 7448;
 	int sendReceivedDataToPortHits = 7010;
 
 	PImage imgCut;
-	
+
 	SimpleVideoInputWithProcessing_100Inputs wekinator;
+
+	long time = 0;
+
+	PVector lastWekinatorHit = new PVector();
+	PVector lastBlobPosition = new PVector();
+	
+	LinkedList<PVector> positionsWaitWekinator = new LinkedList<PVector>();
 
 	public void setup() {
 		frameRate(60);
@@ -177,9 +185,23 @@ public class HitDetector extends PApplet {
 		// port
 
 		imgCut = createImage(10, 10, RGB);
-		
+
 		wekinator = new SimpleVideoInputWithProcessing_100Inputs();
-		wekinator.setup(this, 10,10);
+		wekinator.setup(this, 10, 10);
+	}
+
+	void oscEvent(OscMessage theOscMessage) {
+		/* print the address pattern and the typetag of the received OscMessage */
+		
+		PVector pos = positionsWaitWekinator.removeLast();
+//		println((millis() - time) + "### received an osc message.pending "+positionsWaitWekinator.size());
+		if (theOscMessage.get(0).floatValue() == 1.0f) {
+			
+			print(" addrpattern: " + theOscMessage.addrPattern()+" pending "+positionsWaitWekinator.size());
+			println(" typetag: hit ");
+			lastWekinatorHit.x = pos.x;
+			lastWekinatorHit.y = pos.y;
+		}
 	}
 
 	public void draw() {
@@ -335,6 +357,7 @@ public class HitDetector extends PApplet {
 
 			surface.render(offscreen);
 		}
+
 	}
 
 	@Override
@@ -352,32 +375,46 @@ public class HitDetector extends PApplet {
 		for (Blob b : blobList) {
 
 			// TESTS for wekinator
-			if (b.id == lastId && b.lastAngleVariation > -33) {
-				sended = true;
-				OscMessage msg = new OscMessage("angle/");
-				msg.add(b.velocityAvg.y);
-				if (b.hited)
-					msg.add(0f);
-				else
-					msg.add(1f);
+			// if (b.id == lastId && b.lastAngleVariation > -33) {
+			// sended = true;
+			// OscMessage msg = new OscMessage("angle/");
+			// msg.add(b.velocityAvg.y);
+			// if (b.hited)
+			// msg.add(0f);
+			// else
+			// msg.add(1f);
+			//
+			// oscP5Wekinator.send(msg, destWekinator);
+			// }
 
-				oscP5Wekinator.send(msg, destWekinator);
-			}
-			
 			Rectangle r = b.contour.getBoundingBox();
 
-			imgCut.copy(videoDownsampling, (int) r.x, (int) r.y, r.width,
-					r.height, 0, 0, imgCut.width, imgCut.height);
-			
-			
-			wekinator.send(g, imgCut);
-			
-//			image(imgCut,x,height-100,50,50);
-			
-			//imgCut.save("imgs/image-"+counter+".jpg");
-//			counter++;
+			lastBlobPosition.x = (float) r.getCenterX();
+			lastBlobPosition.y = (float) r.getCenterY();
+
+			float w = r.width * 1.3f;
+			float h = r.height * 1.3f;
+
+			float wh = r.width * .15f;
+			float hh = r.height * .15f;
+
+			if (b.movingUp) {
+				imgCut.copy(videoDownsampling, (int) (r.x - wh),
+						(int) (r.y - hh), (int) w, (int) h, 0, 0, imgCut.width,
+						imgCut.height);
+
+				positionsWaitWekinator.add(new PVector((float)r.getCenterX(),(float)r.getCenterY()));
+				wekinator.send(g, imgCut);
+			}
+
+			// image(imgCut,x,height-100,50,50);
+
+			// imgCut.save("imgs/image-"+counter+".jpg");
+			// counter++;
 
 			if (b.hited && !b.processed) {
+
+				time = millis();
 
 				boolean toadd = debouncing.addHit(b.hitPosition);
 
@@ -391,9 +428,7 @@ public class HitDetector extends PApplet {
 
 					float confidence = 1.0f;// TODO
 					hited(pos, confidence);
-					
 
-					
 				} else {
 					println("descartado");
 				}
@@ -435,6 +470,8 @@ public class HitDetector extends PApplet {
 		} else {
 			image(videoDownsampling, 0, 0);
 		}
+		fill(255);
+		ellipse(lastWekinatorHit.x, lastWekinatorHit.y, 10, 10);
 		popMatrix();
 
 		stroke(255);
@@ -447,7 +484,7 @@ public class HitDetector extends PApplet {
 			text("Tracked Points", src.width / 2 + 10, src.height / 2 + 25);
 		}
 	}
-	
+
 	int counter = 0;
 
 	public void displayBlobs() {
@@ -465,7 +502,6 @@ public class HitDetector extends PApplet {
 
 			x += 150;
 
-			
 		}
 	}
 
@@ -521,7 +557,7 @@ public class HitDetector extends PApplet {
 			fill(255, 0, 0, 150);
 			strokeWeight(2);
 			rect(r.x, r.y, r.width, r.height);
-//			println("" + r.width + " " + r.height);
+			// println("" + r.width + " " + r.height);
 		}
 	}
 

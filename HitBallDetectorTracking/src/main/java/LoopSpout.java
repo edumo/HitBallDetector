@@ -39,8 +39,8 @@ public class LoopSpout extends PApplet {
 
 		background(0);
 		// Load and play the video in a loop
-		movie1 = new Movie(this, "test1.mp4");
-		movie2 = new Movie(this, "test1.mp4");
+		movie1 = new Movie(this, "test2.mp4");
+		movie2 = new Movie(this, "test3.mp4");
 		movie3 = new Movie(this, "test1.mp4");
 		
 		movie = movie1;

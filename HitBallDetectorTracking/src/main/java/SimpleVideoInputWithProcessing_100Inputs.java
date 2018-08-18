@@ -99,8 +99,9 @@ public class SimpleVideoInputWithProcessing_100Inputs {
 		// }
 		img.loadPixels();
 
-		if (parent.frameCount % 2 == 0)
-			sendOsc(img.pixels);
+		// if (parent.frameCount % 2 == 0)
+		
+		sendOsc(img.pixels);
 
 		first = false;
 		canvas.fill(0);
@@ -113,6 +114,7 @@ public class SimpleVideoInputWithProcessing_100Inputs {
 	public void sendOsc(int[] px) {
 		OscMessage msg = new OscMessage("/wek/inputs");
 		// msg.add(px);
+		//this is for x,y position connected directly
 		for (int i = 0; i < px.length; i++) {
 			msg.add(PApplet.parseFloat(px[i]));
 		}
