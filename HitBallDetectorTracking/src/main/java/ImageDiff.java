@@ -14,6 +14,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.features2d.KeyPoint;
+
 public class ImageDiff extends PApplet {
 
 	OpenCV opencv;
@@ -27,7 +35,7 @@ public class ImageDiff extends PApplet {
 		// before = loadImage("before.jpg");
 		// after = loadImage("after.jpg");
 
-		opencv = new OpenCV(this, 1280 / 2, 720 / 2);
+		opencv = new OpenCV(this, 64,64);
 		// opencv.diff(after);
 		// grayDiff = opencv.getSnapshot();
 
@@ -41,39 +49,45 @@ public class ImageDiff extends PApplet {
 
 		spout.createReceiver("VideoSpoutDown");
 		img = createImage(1280 / 2, 720 / 2, ARGB);
+		
+		before = loadImage("hit.jpg");
+		after = loadImage("ball.jpg");
 
 	}
 
 	public void draw() {
+		
+		opencv.loadImage(after);
+		
+		opencv.loadImage(before);
+		
 
-		img = spout.receiveTexture(img);
-
-		if (img == null) {
-			return;
-		}
-
-		videoDownsampling.beginDraw();
-		videoDownsampling.background(0);
-		videoDownsampling.image(img, 0, 0);
-		videoDownsampling.endDraw();
-		
-		opencv.diff(videoDownsampling);
-		
-//		image(opencv.getSnapshot(), 640, 0);
-		opencv.dilate();
-		opencv.blur(8);
-		opencv.threshold(50);
-		
-		
-		image(opencv.getSnapshot(), 0, 0);
-		
-//		image(img, 0, 0);
-
-		opencv.loadImage(videoDownsampling);
+//		img = spout.receiveTexture(img);
+//
+//		if (img == null) {
+//			return;
+//		}
+//
+//		videoDownsampling.beginDraw();
+//		videoDownsampling.background(0);
+//		videoDownsampling.image(img, 0, 0);
+//		videoDownsampling.endDraw();
+//		
+//		opencv.diff(videoDownsampling);
+//		
+////		image(opencv.getSnapshot(), 640, 0);
+//		opencv.dilate();
+//		opencv.blur(8);
+//		opencv.threshold(50);
+//		
+//		
+//		image(opencv.getSnapshot(), 0, 0);
+//		
+////		image(img, 0, 0);
+//
+//		opencv.loadImage(videoDownsampling);
 
 //		opencv.threshold(50);
-		
-	
 		
 		text(frameRate,10,10);
 
@@ -88,6 +102,40 @@ public class ImageDiff extends PApplet {
 		 * 
 		 * // text("color diff", 10, before.height/2+ 20);
 		 */
+	}
+	
+	private Mat detectFeatures(Mat skeleton, Mat edges) {
+	    FeatureDetector star = FeatureDetector.create(FeatureDetector.ORB);
+	    DescriptorExtractor brief = DescriptorExtractor.create(DescriptorExtractor.ORB);
+
+	    MatOfKeyPoint keypoints = new MatOfKeyPoint();
+	    star.detect(skeleton, keypoints);
+	    MatOfKeyPoint keypointsField = keypoints;
+
+	    KeyPoint[] keypointArray = keypoints.toArray();
+	    ArrayList<KeyPoint> filteredKeypointArray = new ArrayList<>(keypointArray.length);
+
+	    int filterCount = 0;
+	    for (KeyPoint k : keypointArray) {
+	        if (edges.get((int)k.pt.y, (int)k.pt.x)[0] <= 0.0) {
+	            k.size /= 8;
+	            filteredKeypointArray.add(k);
+	        } else {
+	            filterCount++;
+	        }
+	    }
+//	    Log.d(TAG, String.format("Filtered %s Keypoints", filterCount));
+
+	    keypoints.fromList(filteredKeypointArray);
+
+	    Mat descriptors = new Mat();
+	    brief.compute(skeleton, keypoints, descriptors);
+	    Mat descriptorsField = descriptors;
+
+	    Mat results = new Mat();
+	    Scalar color = new Scalar(255, 0, 0); // RGB
+	    Features2d.drawKeypoints(skeleton, keypoints, results, color, Features2d.DRAW_RICH_KEYPOINTS);
+	    return results;
 	}
 
 	public void settings() {

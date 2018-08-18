@@ -19,6 +19,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.features2d.KeyPoint;
+
 import netP5.NetAddress;
 import oscP5.OscMessage;
 import oscP5.OscP5;
@@ -101,9 +109,13 @@ public class HitDetector extends PApplet {
 	NetAddress destWekinator;
 	NetAddress destHits;
 
-	int receiveDataOnOSCPort = 6449;
-	int sendReceivedDataToPort = 6448;
+	int receiveDataOnOSCPort = 7449;
+	int sendReceivedDataToPort = 7448;
 	int sendReceivedDataToPortHits = 7010;
+
+	PImage imgCut;
+	
+	SimpleVideoInputWithProcessing_100Inputs wekinator;
 
 	public void setup() {
 		frameRate(60);
@@ -152,7 +164,7 @@ public class HitDetector extends PApplet {
 		oscP5Wekinator = new OscP5(this, receiveDataOnOSCPort); // listen for
 																// incoming
 		oscP5Hits = new OscP5(this, receiveDataOnOSCPort + 1); // listen for
-															// incoming
+																// incoming
 
 		destWekinator = new NetAddress("127.0.0.1", sendReceivedDataToPort); // Set
 																				// up
@@ -164,6 +176,10 @@ public class HitDetector extends PApplet {
 		// desired
 		// port
 
+		imgCut = createImage(10, 10, RGB);
+		
+		wekinator = new SimpleVideoInputWithProcessing_100Inputs();
+		wekinator.setup(this, 10,10);
 	}
 
 	public void draw() {
@@ -290,7 +306,7 @@ public class HitDetector extends PApplet {
 
 		// Contours
 		// displayContours();
-		// displayContoursBoundingBoxes();
+		displayContoursBoundingBoxes();
 
 		analyzeBlobs();
 
@@ -347,6 +363,19 @@ public class HitDetector extends PApplet {
 
 				oscP5Wekinator.send(msg, destWekinator);
 			}
+			
+			Rectangle r = b.contour.getBoundingBox();
+
+			imgCut.copy(videoDownsampling, (int) r.x, (int) r.y, r.width,
+					r.height, 0, 0, imgCut.width, imgCut.height);
+			
+			
+			wekinator.send(g, imgCut);
+			
+//			image(imgCut,x,height-100,50,50);
+			
+			//imgCut.save("imgs/image-"+counter+".jpg");
+//			counter++;
 
 			if (b.hited && !b.processed) {
 
@@ -362,6 +391,9 @@ public class HitDetector extends PApplet {
 
 					float confidence = 1.0f;// TODO
 					hited(pos, confidence);
+					
+
+					
 				} else {
 					println("descartado");
 				}
@@ -415,6 +447,8 @@ public class HitDetector extends PApplet {
 			text("Tracked Points", src.width / 2 + 10, src.height / 2 + 25);
 		}
 	}
+	
+	int counter = 0;
 
 	public void displayBlobs() {
 
@@ -430,6 +464,8 @@ public class HitDetector extends PApplet {
 			showVelGraph(x, scale, b);
 
 			x += 150;
+
+			
 		}
 	}
 
@@ -485,6 +521,7 @@ public class HitDetector extends PApplet {
 			fill(255, 0, 0, 150);
 			strokeWeight(2);
 			rect(r.x, r.y, r.width, r.height);
+//			println("" + r.width + " " + r.height);
 		}
 	}
 
