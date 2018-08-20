@@ -12,60 +12,107 @@
 			<artifactId>log4j</artifactId>
 			<version>1.2.16</version>
 		</dependency>
-		
-	
-		<!--		<dependency>
-			<groupId>de.looksgood.ani</groupId>
-			<artifactId>Ani</artifactId>
+
+
+
+		<dependency>
+			<groupId>controlp5</groupId>
+			<artifactId>controlp5</artifactId>
 			<version>2.5</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/controlP5.jar</systemPath>
 		</dependency>
-<dependency>
-			<groupId>javax.mail</groupId>
-			<artifactId>mail</artifactId>
-			<version>1.4.3</version>
-		</dependency>
+		
 		<dependency>
-			<groupId>org.quartz-scheduler</groupId>
-			<artifactId>quartz</artifactId>
-			<version>2.1.7</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-api</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
+			<groupId>video</groupId>
+			<artifactId>video</artifactId>
+			<version>2</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/video.jar</systemPath>
 		</dependency>
+		
 		<dependency>
-			<groupId>commons-validator</groupId>
-			<artifactId>commons-validator</artifactId>
-			<version>1.4.0</version>
+			<groupId>jna</groupId>
+			<artifactId>jna</artifactId>
+			<version>2</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/jna.jar</systemPath>
+		</dependency>
+		
+		<dependency>
+			<groupId>keystone</groupId>
+			<artifactId>keystone</artifactId>
+			<version>2</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/keystone.jar</systemPath>
+		</dependency>
+		
+		<dependency>
+			<groupId>opencvP5</groupId>
+			<artifactId>opencvP5</artifactId>
+			<version>2.4.5</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/opencv_processing.jar</systemPath>
+		</dependency>
+		
+		<dependency>
+			<groupId>spout</groupId>
+			<artifactId>spout</artifactId>
+			<version>2.4.5</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/spout.jar</systemPath>
 		</dependency>
 
-	  <dependency>
+
+		<dependency>
+			<groupId>pixelFlow</groupId>
+			<artifactId>pixelFlow</artifactId>
+			<version>2.4.5</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/PixelFlow.jar</systemPath>
+		</dependency>
+
+
+		<dependency>
+			<groupId>opencv</groupId>
+			<artifactId>opencv</artifactId>
+			<version>1.4.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/opencv-245.jar</systemPath>
+		</dependency>
+
+		<dependency>
 			<groupId>processing</groupId>
-			<artifactId>TUIO</artifactId>
+			<artifactId>oscP5</artifactId>
 			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/oscP5.jar</systemPath>
 		</dependency>
 
 		<dependency>
 			<groupId>processing</groupId>
 			<artifactId>core</artifactId>
-			<version>2.2.1</version>
+			<version>3.7</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/core.jar</systemPath>
 		</dependency>
 
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all-main</artifactId>
 			<version>2.1.2-rc-20131025</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/jogl-all.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-main</artifactId>
-			<version>2.1.2-rc-20131025</version>
+			<artifactId>gluegen-rt</artifactId>
+			<version>2.1.2</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/gluegen-rt.jar</systemPath>
 		</dependency>
 
-		
--->
+
 
 
 	</dependencies>
