@@ -62,6 +62,28 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/spout.jar</systemPath>
 		</dependency>
+		
+		<dependency>
+			<groupId>video</groupId>
+			<artifactId>video</artifactId>
+			<version>3</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/video.jar</systemPath>
+		</dependency>
+<dependency>
+			<groupId>gstreamer</groupId>
+			<artifactId>gstreamer</artifactId>
+			<version>3</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/gstreamer-java.jar</systemPath>
+		</dependency>		
+		<dependency>
+			<groupId>jai</groupId>
+			<artifactId>jai</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/jai_core.jar</systemPath>
+		</dependency>
 
 
 		<dependency>
