@@ -22,7 +22,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/controlP5.jar</systemPath>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>video</groupId>
 			<artifactId>video</artifactId>
@@ -30,7 +30,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/video.jar</systemPath>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>jna</groupId>
 			<artifactId>jna</artifactId>
@@ -38,7 +38,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/jna.jar</systemPath>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>keystone</groupId>
 			<artifactId>keystone</artifactId>
@@ -46,7 +46,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/keystone.jar</systemPath>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>opencvP5</groupId>
 			<artifactId>opencvP5</artifactId>
@@ -54,7 +54,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/opencv_processing.jar</systemPath>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>spout</groupId>
 			<artifactId>spout</artifactId>
@@ -62,7 +62,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/spout.jar</systemPath>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>video</groupId>
 			<artifactId>video</artifactId>
@@ -70,13 +70,13 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/video.jar</systemPath>
 		</dependency>
-<dependency>
+		<dependency>
 			<groupId>gstreamer</groupId>
 			<artifactId>gstreamer</artifactId>
 			<version>3</version>
 			<scope>system</scope>
 			<systemPath>${basedir}/libs/gstreamer-java.jar</systemPath>
-		</dependency>		
+		</dependency>
 		<dependency>
 			<groupId>jai</groupId>
 			<artifactId>jai</artifactId>
