@@ -198,9 +198,9 @@ public class HitDetector extends PApplet {
 		// println((millis() - time) +
 		// "### received an osc message.pending "+positionsWaitWekinator.size());
 		if (theOscMessage.get(0).floatValue() == 1.0f) {
-			print(" addrpattern: " + theOscMessage.addrPattern() + " pending "
-					+ positionsWaitWekinator.size());
-			println(" typetag: hit ");
+//			print(" addrpattern: " + theOscMessage.addrPattern() + " pending "
+//					+ positionsWaitWekinator.size());
+//			println(" typetag: hit ");
 			job.blob.lastWekinatorHits.add(pos);
 			job.blob.hitedDnn = true;
 
@@ -409,7 +409,8 @@ public class HitDetector extends PApplet {
 						(int) (r.y - hh), (int) w, (int) h, 0, 0, imgCut.width,
 						imgCut.height);
 
-				positionsWaitWekinator.add(new WekinatorJob(b, b.path.get(b.path.size()-1)));
+				positionsWaitWekinator.add(new WekinatorJob(b, b.path
+						.get(b.path.size() - 1)));
 				wekinator.send(g, imgCut);
 			}
 
@@ -418,7 +419,7 @@ public class HitDetector extends PApplet {
 			// imgCut.save("imgs/image-"+counter+".jpg");
 			// counter++;
 
-			if (b.hited && !b.processed) {
+			if (b.hited && !b.processed && millis() > b.hitedTime + 100) {
 
 				time = millis();
 
@@ -432,7 +433,19 @@ public class HitDetector extends PApplet {
 					pos.x = norm(pos.x, 0, offscreen.width);
 					pos.y = norm(pos.y, 0, offscreen.height);
 
-					float confidence = 1.0f;// TODO
+					float confidence = 0.8f;// TODO
+
+					float dist = 100000000;
+					for (int i = 0; i < b.lastWekinatorHits.size(); i++) {
+						PVector posHitDnn = b.lastWekinatorHits.get(i);
+						float d = posHitDnn.dist(new PVector(b.hitPosition.x,b.hitPosition.y));
+						if (d < dist) {
+							dist = d;
+						}
+					}
+
+					println(dist);
+					confidence += min(0.2f,max(0,map(dist, 100, 0, 0, 0.2f)));
 					hited(pos, confidence);
 
 				} else {
@@ -460,6 +473,8 @@ public class HitDetector extends PApplet {
 		msg.add(confidence);
 
 		oscP5Hits.send(msg, destHits);
+		
+		println("hited confidence "+confidence);
 	}
 
 	public void displayImages() {

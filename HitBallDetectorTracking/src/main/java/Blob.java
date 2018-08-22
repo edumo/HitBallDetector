@@ -47,6 +47,7 @@ class Blob {
 	PVector velocityAvg = new PVector();
 
 	boolean hited = false;
+	long hitedTime = -1;
 	boolean hitedDnn = false;
 	boolean processed = false;
 	PVector hitPosition = new PVector();
@@ -93,12 +94,7 @@ class Blob {
 		PVector last = null;
 		if (hitedDnn){
 			canvas.ellipseMode(PApplet.CENTER);
-			canvas.noStroke();
-			canvas.fill(255);
-			for (int i = 0; i < lastWekinatorHits.size(); i++) {
-				PVector pos = lastWekinatorHits.get(i);
-				canvas.ellipse(pos.x, pos.y, 10, 10);
-			}
+			
 			canvas.strokeWeight(4);
 		}else
 			canvas.strokeWeight(1);
@@ -127,6 +123,13 @@ class Blob {
 		if (hited) {
 			canvas.fill(255, 0, 0);
 			canvas.ellipse(hitPosition.x, hitPosition.y, 20, 20);
+		}
+		
+		canvas.noStroke();
+		canvas.fill(255);
+		for (int i = 0; i < lastWekinatorHits.size(); i++) {
+			PVector pos = lastWekinatorHits.get(i);
+			canvas.ellipse(pos.x, pos.y, 10, 10);
 		}
 
 		canvas.popStyle();
@@ -204,6 +207,11 @@ class Blob {
 
 			if (velocityAvg.y < -velocityDownThreshold) {
 				movingUp = true;
+				if(hited && !processed){
+					//subo y ya me disparé, no es correcto
+					System.out.println("fixed hit detection on time");
+					hited = false;
+				}
 			}
 
 			if (!hited && movingUp) {
@@ -216,6 +224,7 @@ class Blob {
 
 					hitPosition.set(pos2.x, pos2.y);
 					hited = true;
+					hitedTime = parent.millis();
 					PApplet.println(id + " hited");
 				}
 			}
