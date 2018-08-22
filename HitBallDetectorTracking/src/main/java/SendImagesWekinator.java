@@ -19,7 +19,7 @@ public class SendImagesWekinator extends PApplet {
 
 	String[] files = null;
 
-	String path = "C:/Users/motografica/git/HitBallDetector/HitBallDetectorTracking/balls";
+	String path = "C:/Users/motografica/git/HitBallDetector/HitBallDetectorTracking/hits";
 
 	SimpleVideoInputWithProcessing_100Inputs wekinator = null;
 

@@ -13,6 +13,7 @@ import controlP5.*;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -120,10 +121,10 @@ public class HitDetector extends PApplet {
 
 	long time = 0;
 
-	PVector lastWekinatorHit = new PVector();
 	PVector lastBlobPosition = new PVector();
-	
-	LinkedList<PVector> positionsWaitWekinator = new LinkedList<PVector>();
+
+	LinkedList<WekinatorJob> positionsWaitWekinator = new LinkedList<WekinatorJob>();
+	LinkedList<Blob> lastBlobs = new LinkedList<Blob>();
 
 	public void setup() {
 		frameRate(60);
@@ -191,16 +192,18 @@ public class HitDetector extends PApplet {
 	}
 
 	void oscEvent(OscMessage theOscMessage) {
-		/* print the address pattern and the typetag of the received OscMessage */
-		
-		PVector pos = positionsWaitWekinator.removeLast();
-//		println((millis() - time) + "### received an osc message.pending "+positionsWaitWekinator.size());
+
+		WekinatorJob job = positionsWaitWekinator.removeLast();
+		PVector pos = job.pos;
+		// println((millis() - time) +
+		// "### received an osc message.pending "+positionsWaitWekinator.size());
 		if (theOscMessage.get(0).floatValue() == 1.0f) {
-			
-			print(" addrpattern: " + theOscMessage.addrPattern()+" pending "+positionsWaitWekinator.size());
+			print(" addrpattern: " + theOscMessage.addrPattern() + " pending "
+					+ positionsWaitWekinator.size());
 			println(" typetag: hit ");
-			lastWekinatorHit.x = pos.x;
-			lastWekinatorHit.y = pos.y;
+			job.blob.lastWekinatorHits.add(pos);
+			job.blob.hitedDnn = true;
+
 		}
 	}
 
@@ -335,7 +338,10 @@ public class HitDetector extends PApplet {
 		debouncing.display(g);
 
 		// Blobs
-		displayBlobs();
+		displayBlobs(blobList);
+		displayBlobs(lastBlobs);
+
+		fill(255);
 
 		popMatrix();
 
@@ -403,7 +409,7 @@ public class HitDetector extends PApplet {
 						(int) (r.y - hh), (int) w, (int) h, 0, 0, imgCut.width,
 						imgCut.height);
 
-				positionsWaitWekinator.add(new PVector((float)r.getCenterX(),(float)r.getCenterY()));
+				positionsWaitWekinator.add(new WekinatorJob(b, b.path.get(b.path.size()-1)));
 				wekinator.send(g, imgCut);
 			}
 
@@ -471,7 +477,7 @@ public class HitDetector extends PApplet {
 			image(videoDownsampling, 0, 0);
 		}
 		fill(255);
-		ellipse(lastWekinatorHit.x, lastWekinatorHit.y, 10, 10);
+
 		popMatrix();
 
 		stroke(255);
@@ -487,11 +493,11 @@ public class HitDetector extends PApplet {
 
 	int counter = 0;
 
-	public void displayBlobs() {
+	public void displayBlobs(List<Blob> blobs) {
 
 		int x = 50;
 		float scale = 2;
-		for (Blob b : blobList) {
+		for (Blob b : blobs) {
 			strokeWeight(1);
 			b.display(g);
 			noFill();
@@ -501,7 +507,6 @@ public class HitDetector extends PApplet {
 			showVelGraph(x, scale, b);
 
 			x += 150;
-
 		}
 	}
 
@@ -573,7 +578,7 @@ public class HitDetector extends PApplet {
 
 		newBlobContours = getBlobsFromContours(contours);
 
-		int maxDistance = 60;
+		int maxDistance = 80;
 
 		// println(contours.length);
 
@@ -682,7 +687,13 @@ public class HitDetector extends PApplet {
 		for (int i = blobList.size() - 1; i >= 0; i--) {
 			Blob b = blobList.get(i);
 			if (b.delete) {
-				blobList.remove(i);
+				Blob blob = blobList.remove(i);
+				if (blob.movingUp) {
+					lastBlobs.add(blob);
+					if (lastBlobs.size() > 4) {
+						lastBlobs.removeFirst();
+					}
+				}
 			}
 		}
 	}

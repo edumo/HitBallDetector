@@ -47,6 +47,7 @@ class Blob {
 	PVector velocityAvg = new PVector();
 
 	boolean hited = false;
+	boolean hitedDnn = false;
 	boolean processed = false;
 	PVector hitPosition = new PVector();
 
@@ -58,6 +59,8 @@ class Blob {
 
 	OscP5 oscP5;
 	NetAddress dest;
+	
+	List<PVector> lastWekinatorHits = new ArrayList<PVector>();
 
 	// Make me
 	public Blob(PApplet parent, int id, Contour c, OscP5 oscP5, NetAddress dest) {
@@ -88,6 +91,17 @@ class Blob {
 		canvas.text("" + id + " " + angle, r.x + 10, r.y + 30);
 
 		PVector last = null;
+		if (hitedDnn){
+			canvas.ellipseMode(PApplet.CENTER);
+			canvas.noStroke();
+			canvas.fill(255);
+			for (int i = 0; i < lastWekinatorHits.size(); i++) {
+				PVector pos = lastWekinatorHits.get(i);
+				canvas.ellipse(pos.x, pos.y, 10, 10);
+			}
+			canvas.strokeWeight(4);
+		}else
+			canvas.strokeWeight(1);
 		for (PVector v : path) {
 
 			if (hited) {
@@ -160,10 +174,10 @@ class Blob {
 			lastAngle = angle;
 
 			angle = PApplet.atan2(velocityAvg.y, velocityAvg.x);
-//			OscMessage msg = new OscMessage("angle/" + id);
-//			msg.add(top.y);
-//			// msg.add(top.x);
-//			oscP5.send(msg, dest);
+			// OscMessage msg = new OscMessage("angle/" + id);
+			// msg.add(top.y);
+			// // msg.add(top.x);
+			// oscP5.send(msg, dest);
 			if (lastAngle > -33) {
 				// now we have moments to compare
 
@@ -173,17 +187,15 @@ class Blob {
 							- lastAngleVariation);
 					// PApplet.println(id + " dif " + differentialVarationTime);
 
-					
-
-//					if (differentialVarationTime > 1.5f) {
-//						if (!hited && movingUp) {
-//							hited = true;
-//							PApplet.println(id + " hited");
-//							hitPosition.set((float) newC.getBoundingBox()
-//									.getCenterX(), (float) newC
-//									.getBoundingBox().getCenterY());
-//						}
-//					}
+					// if (differentialVarationTime > 1.5f) {
+					// if (!hited && movingUp) {
+					// hited = true;
+					// PApplet.println(id + " hited");
+					// hitPosition.set((float) newC.getBoundingBox()
+					// .getCenterX(), (float) newC
+					// .getBoundingBox().getCenterY());
+					// }
+					// }
 				}
 
 				lastAngleVariation = variation;
