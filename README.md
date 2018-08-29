@@ -16,6 +16,10 @@ The HitDetector project is a P5 (processing.org) project using eclipse as IDE, d
 
 We need a HitDetector instance for each camera, also a wekinator instance running in different ports for each. Could be used only one instance, the running is not dependent.
 
+## Compilation
+
+The project uses maven. Import the project in your favorite IDE, only tested with Eclipse.
+
 ## Solutions
 
 We will solve the problem with a classical aproch with Blob Tracking and path anlysis. After that, will test some modern techniques as research.
