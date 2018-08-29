@@ -14,8 +14,10 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.io.File;
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -190,6 +192,8 @@ public class HitDetector extends PApplet {
 		wekinator = new SimpleVideoInputWithProcessing_100Inputs();
 		wekinator.setup(this, 10, 10);
 	}
+	
+
 
 	void oscEvent(OscMessage theOscMessage) {
 
@@ -221,13 +225,13 @@ public class HitDetector extends PApplet {
 
 		videoDownsampling.beginDraw();
 		videoDownsampling.background(0);
-		videoDownsampling.image(img, 0, 0);
+		videoDownsampling.image(img, 0, 0,videoDownsampling.width, videoDownsampling.height);
 		videoDownsampling.endDraw();
 
-		videoDownsampling.beginDraw();
-		videoDownsampling.image(videoDownsampling, 0, 0,
-				videoDownsampling.width, videoDownsampling.height);
-		videoDownsampling.endDraw();
+//		videoDownsampling.beginDraw();
+//		videoDownsampling.image(videoDownsampling, 0, 0,
+//				videoDownsampling.width, videoDownsampling.height);
+//		videoDownsampling.endDraw();
 
 		// Load the new frame of our camera in to OpenCV
 
@@ -885,12 +889,17 @@ public class HitDetector extends PApplet {
 		xml.setString("id", id);
 		xml.setFloat("contrast", contrast);
 		xml.setInt("threshold", threshold);
+		xml.setInt("brightness", brightness);
 
 		xml.setInt("thresholdBlockSize", thresholdBlockSize);
 		xml.setInt("thresholdConstant", thresholdConstant);
 		xml.setInt("minBlobSizeThreshold", minBlobSizeThreshold);
 		xml.setInt("maxBlobSizeThreshold", maxBlobSizeThreshold);
-
+		
+		xml.setInt("receiveDataOnOSCPort", receiveDataOnOSCPort);
+		xml.setInt("sendReceivedDataToPort", sendReceivedDataToPort);
+		xml.setInt("sendReceivedDataToPortHits", sendReceivedDataToPortHits);
+		
 		xml.setFloat("velocityUpThreshold", velocityUpThreshold);
 		xml.setFloat("velocityDownThreshold", velocityDownThreshold);
 
@@ -902,12 +911,17 @@ public class HitDetector extends PApplet {
 
 		id = xml.getString("id");
 		contrast = xml.getFloat("contrast");
+		brightness = xml.getInt("brightness");
 		threshold = xml.getInt("threshold");
 
 		thresholdBlockSize = xml.getInt("thresholdBlockSize");
 		thresholdConstant = xml.getInt("thresholdConstant");
 		minBlobSizeThreshold = xml.getInt("minBlobSizeThreshold");
 		maxBlobSizeThreshold = xml.getInt("maxBlobSizeThreshold");
+		
+		receiveDataOnOSCPort = xml.getInt("receiveDataOnOSCPort");
+		sendReceivedDataToPort = xml.getInt("sendReceivedDataToPort");
+		sendReceivedDataToPortHits= xml.getInt("sendReceivedDataToPortHits");
 
 		velocityUpThreshold = xml.getFloat("velocityUpThreshold");
 		velocityDownThreshold = xml.getFloat("velocityDownThreshold");
