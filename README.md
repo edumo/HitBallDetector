@@ -45,11 +45,11 @@ The dataset used to train is the same used to train dlib. In the eclipse project
 
 ### DWT
 
-Dwt is nice to detect gestures, if only one ball is on scene this method will work smoothly with blobs positions. De shadow and the ball draws a nice pattern of each blob. Detecting hits using the identification from opencv could be a nice solution but you need as many wekinator instances as the maximun of the balls that could be detected, and group the blobs by ball ( ball and shadow)
+Dwt is nice to detect gestures, if only one ball is on scene this method will work smoothly with blobs positions. Shadow and  ball draws a nice pattern of each blob. Detecting hits using the identification from opencv could be a nice solution but you need as many wekinator instances as the maximun of the balls that could be detected, and group the blobs by ball ( ball and shadow)
 
 ### HOG DLIB
 
-From Dlib docs "This is a technique for detecting semi-rigid objects". The light distribution changes the features of object detected ...
+From Dlib docs "This is a technique for detecting semi-rigid objects". The light distribution and the movement changes the features of object detected ...
 
 - Example used to train
 
