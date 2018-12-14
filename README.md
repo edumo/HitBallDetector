@@ -1,5 +1,7 @@
 # HitBallDetector
 
+[![Watch the video]](https://github.com/edumo/HitBallDetector/blob/master/2018-12-14%2021-09-08.flv?raw=true)
+
 Computer vision app to detect balls hitting a Wall with one IR camera and two lights sources. Development of this project was supported by nexcommunity.com.
 
 TODO license
